@@ -556,11 +556,11 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
     <a class="nav-item active" data-page="dashboard"><svg class="icon"><use href="#i-grid"/></svg><span class="label">Stats Dashboard</span></a>
 
     <div class="nav-group-label">Bookings</div>
-    <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count">24</span></a>
+    <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count" id="navPendingBadge">24</span></a>
     <a class="nav-item" data-page="completed"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
 
     <div class="nav-group-label">Security</div>
-    <a class="nav-item" data-page="fraud"><svg class="icon"><use href="#i-shield"/></svg><span class="label">Fraud Prevention</span><span class="badge-count" style="background:var(--red-dim); color:var(--red);">5</span></a>
+    <a class="nav-item" data-page="fraud"><svg class="icon"><use href="#i-shield"/></svg><span class="label">Fraud Prevention</span><span class="badge-count" id="navFraudBadge" style="background:var(--red-dim); color:var(--red);">5</span></a>
     <a class="nav-item" data-page="admin" id="navAdminSettings"><svg class="icon"><use href="#i-lock"/></svg><span class="label">Admin Settings</span></a>
 
     <div class="sidebar-footer">
@@ -1370,6 +1370,8 @@ async function loadDashboardStats(){
     set('kpiPendingCount', s.pendingCount.toLocaleString());
     set('kpiCompletedCount', s.completedCount.toLocaleString());
     set('kpiFraudCount', s.fraudCount.toLocaleString());
+    set('navPendingBadge', s.pendingCount.toLocaleString());
+    set('navFraudBadge', s.fraudCount.toLocaleString());
     set('kpiAvgBookingValue', '$' + s.avgBookingValue.toLocaleString());
     set('kpiRevenueToday', '$' + s.revenueToday.toLocaleString());
     set('kpiRevenueMonth', '$' + s.revenueMonth.toLocaleString());
