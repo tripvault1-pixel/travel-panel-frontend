@@ -954,15 +954,6 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
           </div>
         </div>
 
-        <div class="panel" style="margin-bottom:20px; border-color:rgba(251,191,36,0.3); background:linear-gradient(120deg, rgba(251,191,36,0.06), var(--surface) 60%);">
-          <div style="display:flex; gap:12px; align-items:flex-start;">
-            <svg class="icon" style="width:18px;height:18px; color:var(--amber); flex-shrink:0; margin-top:1px;"><use href="#i-alert"/></svg>
-            <div style="font-size:12.5px; color:var(--text-dim); line-height:1.6;">
-              <b style="color:var(--text);">This is a front-end simulation.</b> Login and IP checks run entirely in this browser tab — there's no server behind them. Anyone who can view this page's source or disable JavaScript can bypass it. Treat this as a UI prototype of the flow, not a real access-control boundary; genuine enforcement requires a server, reverse proxy, or WAF checking IPs before the page is ever served.
-            </div>
-          </div>
-        </div>
-
         <div class="grid-2">
           <div class="panel">
             <div class="panel-head">
@@ -2514,7 +2505,7 @@ function showVCCModal(bookingId, amount, vendor){
             <div style="font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:.3px;">TripWiz LLC</div>
             <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:.5px; margin-top:2px;">VIRTUAL CORPORATE CARD</div>
           </div>
-          <span title="Training use only" style="display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; border:1px solid var(--border-strong); color:var(--amber); flex-shrink:0;"><svg class="icon" style="width:14px;height:14px"><use href="#i-alert"/></svg></span>
+          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.18); flex-shrink:0;"></span>
         </div>
         <div style="font-family:var(--font-mono); font-size:18px; letter-spacing:2px; margin-bottom:18px; position:relative;">${cardNum}</div>
         <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); position:relative;">
