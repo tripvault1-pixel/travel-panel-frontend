@@ -1073,6 +1073,10 @@ function renderLoginScreen(ip){
           <label>Password</label>
           <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password">
         </div>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px; cursor:pointer; font-size:12px; color:var(--text-dim);">
+          <input type="checkbox" id="rememberMe" style="width:15px;height:15px;" checked>
+          Keep me signed in on this device
+        </label>
         <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:10px;" id="authSubmit">Sign In</button>
         <div style="text-align:center; margin-bottom:14px;"><a href="#" id="forgotLink" style="font-size:11.5px; color:var(--orange-2);">Forgot password?</a></div>
         <div style="font-size:10.5px; color:var(--text-faint);">IP verified: <span class="cell-mono">${ip || 'unknown'}</span> · Accounts are created by an admin</div>
@@ -1145,9 +1149,16 @@ function renderResetPasswordScreen(token){
   };
 }
 
+// localStorage can throw in some browser contexts (private mode, storage
+// disabled, etc.) — wrap every access so a storage failure never breaks login.
+function safeStorageSet(key, val){ try { localStorage.setItem(key, val); } catch(e){} }
+function safeStorageGet(key){ try { return localStorage.getItem(key); } catch(e){ return null; } }
+function safeStorageRemove(key){ try { localStorage.removeItem(key); } catch(e){} }
+
 async function attemptLogin(){
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
   const password = document.getElementById('authPassword').value;
+  const remember = document.getElementById('rememberMe').checked;
   const errEl = document.getElementById('authError');
   const btn = document.getElementById('authSubmit');
   btn.disabled = true; btn.textContent = 'Signing in…';
@@ -1155,6 +1166,8 @@ async function attemptLogin(){
     const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
     authToken = data.token;
     currentUser = data.user;
+    if(remember) safeStorageSet('tp_token', data.token);
+    else safeStorageRemove('tp_token');
     errEl.classList.remove('show');
     document.getElementById('authGate').innerHTML = '';
     document.getElementById('appRoot').style.display = '';
@@ -1171,6 +1184,7 @@ async function attemptLogin(){
 function logout(){
   currentUser = null;
   authToken = null;
+  safeStorageRemove('tp_token');
   document.getElementById('appRoot').style.display = 'none';
   renderLoginScreen(detectedIP);
 }
@@ -1589,6 +1603,24 @@ async function initAuthGate(){
   if(resetToken){
     renderResetPasswordScreen(resetToken);
     return;
+  }
+
+  const savedToken = safeStorageGet('tp_token');
+  if(savedToken){
+    authToken = savedToken;
+    try {
+      const me = await apiFetch('/auth/me');
+      currentUser = me.user;
+      document.getElementById('authGate').innerHTML = '';
+      document.getElementById('appRoot').style.display = '';
+      updateProfileUI(currentUser);
+      await bootstrapApp();
+      return;
+    } catch(err) {
+      // Saved token is expired/invalid — clear it and fall through to a normal login.
+      authToken = null;
+      safeStorageRemove('tp_token');
+    }
   }
 
   renderLoginScreen(detectedIP);
