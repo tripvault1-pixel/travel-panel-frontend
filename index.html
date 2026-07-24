@@ -577,12 +577,12 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
       <button class="icon-btn" id="sidebarToggle"><svg class="icon"><use href="#i-menu"/></svg></button>
       <div class="search-bar">
         <svg class="icon" style="width:16px;height:16px;color:var(--text-faint)"><use href="#i-search"/></svg>
-        <input type="text" placeholder="Search bookings, customers, confirmation #...">
+        <input type="text" id="globalSearchInput" placeholder="Search bookings, customers, confirmation #..." onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)">
         <span class="search-kbd">⌘K</span>
       </div>
       <div class="topbar-right">
         <div class="daterange" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'This month'},{label:'Jul 12 – Jul 18, 2026'},{label:'Custom range…'}])"> <svg class="icon" style="width:14px;height:14px"><use href="#i-cal"/></svg> Jul 12 – Jul 18, 2026 <svg class="icon" style="width:13px;height:13px"><use href="#i-chevron-down"/></svg></div>
-        <button class="icon-btn" style="position:relative" onclick="event.stopPropagation(); menu(this,[{label:'BK-10298 flagged for fraud review'},{label:'BK-10299 payment overdue'},{label:'BK-10287 completed successfully'},{label:'Mark all as read'}])"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot"></span></button>
+        <button class="icon-btn" id="notifBellBtn" style="position:relative" onclick="event.stopPropagation(); showNotifications(this)"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot" id="notifDot" style="display:none;"></span></button>
         <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Account settings'},{label:'Notification preferences'},{label:'Sign out', danger:true}])">HF</div>
       </div>
     </header>
@@ -719,14 +719,14 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
             <div class="page-sub">Awaiting confirmation, payment, or review — 24 open items</div>
           </div>
           <div class="btn-row">
-            <button class="btn" onclick="toast('Pending bookings exported')"><svg class="icon" style="width:15px;height:15px"><use href="#i-download"/></svg> Export</button>
+            <button class="btn" onclick="exportTableCsv('pending')"><svg class="icon" style="width:15px;height:15px"><use href="#i-download"/></svg> Export</button>
             <button class="btn btn-primary" onclick="showNewBookingModal()">+ New Booking</button>
           </div>
         </div>
 
         <div class="table-card">
           <div class="table-toolbar">
-            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input placeholder="Search by customer, booking ID..."></div>
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input id="pendingSearchInput" placeholder="Search by customer, booking ID..." oninput="handleTableSearch('pending', this.value)"></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'Last 90 days'},{label:'Custom range…'}])"><svg class="icon" style="width:13px;height:13px"><use href="#i-cal"/></svg> Date Range <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Bali, Indonesia'},{label:'Paris, France'},{label:'Tokyo, Japan'},{label:'Santorini, Greece'},{label:'Cancún, Mexico'},{label:'All destinations'}])"><svg class="icon" style="width:13px;height:13px"><use href="#i-globe"/></svg> Destination <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Website'},{label:'Mobile App'},{label:'Call Center'},{label:'Partner Agency'},{label:'All sources'}])">Source <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
@@ -779,9 +779,9 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
             <div class="page-sub">Confirmed and finalized travel bookings</div>
           </div>
           <div class="btn-row">
-            <div class="filter-select" style="cursor:pointer;" onclick="toast('Completed bookings exported as CSV')">CSV</div>
-            <div class="filter-select" style="cursor:pointer;" onclick="toast('Completed bookings exported as Excel')">Excel</div>
-            <div class="filter-select" style="cursor:pointer;" onclick="toast('Completed bookings exported as PDF')">PDF</div>
+            <div class="filter-select" style="cursor:pointer;" onclick="exportTableCsv('completed')">CSV</div>
+            <div class="filter-select" style="cursor:pointer;" onclick="exportTableCsv('completed')">Excel</div>
+            <div class="filter-select" style="cursor:pointer;" onclick="exportTablePdf('completed')">PDF</div>
           </div>
         </div>
 
@@ -810,7 +810,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
 
         <div class="table-card">
           <div class="table-toolbar">
-            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input placeholder="Search confirmation #, customer..."></div>
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input id="completedSearchInput" placeholder="Search confirmation #, customer..." oninput="handleTableSearch('completed', this.value)"></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'Last 90 days'},{label:'Custom range…'}])"><svg class="icon" style="width:13px;height:13px"><use href="#i-cal"/></svg> Date Range <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Visa'},{label:'Mastercard'},{label:'Amex'},{label:'All methods'}])">Payment Method <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'M. Alvarez'},{label:'J. Rivera'},{label:'S. Osei'},{label:'All agents'}])">Agent <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
@@ -877,7 +877,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Fraud Rate<small>% of total bookings flagged</small></div></div>
             <div class="chart-wrap sm"><canvas id="chartFraudRate"></canvas></div>
-            <div style="text-align:center; margin-top:6px;"><span style="font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--red)">2.1%</span><span style="color:var(--text-faint); font-size:11.5px;"> of bookings this month</span></div>
+            <div style="text-align:center; margin-top:6px;"><span style="font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--red)" id="fraudRateText">2.1%</span><span style="color:var(--text-faint); font-size:11.5px;"> of all bookings</span></div>
           </div>
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Most Common Triggers</div></div>
@@ -895,13 +895,11 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
             <div class="chart-wrap"><canvas id="chartFraudOverTime"></canvas></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Prevented Losses<small>Estimated savings this quarter</small></div></div>
+            <div class="panel-head"><div class="panel-title">Prevented Losses<small>Total held on unreleased flagged bookings</small></div></div>
             <div style="display:flex; flex-direction:column; justify-content:center; height:100%; gap:16px;">
-              <div><div class="kpi-value" style="font-size:32px; color:var(--green);">$186,420</div><div class="kpi-label">Blocked before payout</div></div>
+              <div><div class="kpi-value" style="font-size:32px; color:var(--green);" id="preventedLossesValue">$186,420</div><div class="kpi-label">Held / blocked before payout</div></div>
               <div class="legend-row" style="margin-top:0;">
-                <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Card fraud $94.2K</div>
-                <div class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span>Account takeover $61.8K</div>
-                <div class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>Promo abuse $30.4K</div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span><span id="confirmedLossesText">Confirmed fraud $0</span></div>
               </div>
             </div>
           </div>
@@ -909,7 +907,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
 
         <div class="table-card">
           <div class="table-toolbar">
-            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input placeholder="Search booking ID, customer, IP..."></div>
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input id="fraudSearchInput" placeholder="Search booking ID, customer, IP..." oninput="handleTableSearch('fraud', this.value)"></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'High risk'},{label:'Medium risk'},{label:'Low risk'},{label:'All levels'}])">Risk Level <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Under review'},{label:'On hold'},{label:'Confirmed fraud'},{label:'Released'}])">Status <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
             <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Russia'},{label:'Nigeria'},{label:'Ukraine'},{label:'Brazil'},{label:'China'}])">Billing Country <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
@@ -1177,6 +1175,113 @@ function logout(){
   renderLoginScreen(detectedIP);
 }
 
+let profileData = null;
+
+async function loadProfile(){
+  try {
+    const data = await apiFetch('/auth/me');
+    profileData = data.user;
+  } catch(err) {
+    console.warn('Failed to load profile:', err.message);
+  }
+}
+
+function showProfileModal(){
+  const p = profileData || currentUser || {};
+  const memberSince = p.created_at ? new Date(p.created_at + 'Z').toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '—';
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:380px; text-align:left;">
+      <div class="detail-header">
+        <div class="cust-avatar" style="width:40px;height:40px;font-size:13px;">${(p.email||'??').slice(0,2).toUpperCase()}</div>
+        <div><b>${p.email || ''}</b><span>${p.role || ''}</span></div>
+      </div>
+      <div class="detail-grid">
+        <div><span class="detail-label">Email</span><span class="detail-value">${p.email || ''}</span></div>
+        <div><span class="detail-label">Role</span><span class="detail-value">${p.role || ''}</span></div>
+        <div style="grid-column:1/-1;"><span class="detail-label">Member Since</span><span class="detail-value cell-mono">${memberSince}</span></div>
+        <div style="grid-column:1/-1;"><span class="detail-label">Fraud Email Alerts</span><span class="detail-value">${p.notify_on_fraud ? 'On' : 'Off'}</span></div>
+      </div>
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="profClose">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#profClose').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+}
+
+function showNotificationPrefsModal(){
+  const p = profileData || {};
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:380px; text-align:left;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-bell"/></svg></div>
+      <h3>Notification Preferences</h3>
+      <p>Choose what gets emailed to you.</p>
+      <label style="display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:12px; margin-bottom:18px; cursor:pointer;">
+        <input type="checkbox" id="notifFraudToggle" ${p.notify_on_fraud ? 'checked' : ''} style="width:16px;height:16px;">
+        <span style="font-size:12.5px;">Email me when a booking is flagged for fraud review</span>
+      </label>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="npCancel">Cancel</button>
+        <button class="btn btn-primary" id="npSave">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#npCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#npSave').onclick = async () => {
+    const notifyOnFraud = document.getElementById('notifFraudToggle').checked;
+    try {
+      await apiFetch('/auth/notifications', { method: 'PATCH', body: JSON.stringify({ notifyOnFraud }) });
+      if(profileData) profileData.notify_on_fraud = notifyOnFraud;
+      root.remove();
+      toast('Notification preferences saved');
+    } catch(err) {
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+async function showNotifications(el){
+  event && event.stopPropagation();
+  closeMenus();
+  let items = [{ label: 'Loading…' }];
+  const rect = el.getBoundingClientRect();
+  const m = document.createElement('div');
+  m.className = 'dropdown-menu';
+  const left = Math.min(rect.left, window.innerWidth - 300);
+  m.style.cssText = `position:fixed; top:${rect.bottom+6}px; left:${left}px; width:300px; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:10px; padding:6px; box-shadow:0 20px 40px -12px rgba(0,0,0,0.6); z-index:300;`;
+  m.innerHTML = `<div style="padding:10px 12px; font-size:12px; color:var(--text-faint);">Loading…</div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{ document.addEventListener('click', function outsideClose(ev){ if(!m.contains(ev.target)){ m.remove(); } document.removeEventListener('click', outsideClose); }); }, 0);
+
+  try {
+    const feed = await apiFetch('/stats/activity-feed?limit=8');
+    const rows = feed.activity;
+    if(!rows || rows.length === 0){
+      m.innerHTML = `<div style="padding:16px 12px; font-size:12px; color:var(--text-faint); text-align:center;">No recent activity</div>`;
+      return;
+    }
+    m.innerHTML = `<div style="padding:8px 10px 4px; font-size:10.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-faint); font-weight:600;">Recent Activity</div>` +
+      rows.map(a => `
+        <div class="dropdown-item" style="padding:9px 10px;border-radius:7px;font-size:12px; white-space:normal; line-height:1.4;">
+          <b>${a.booking_id || ''}</b> ${(ACTIVITY_VERB[a.type] || a.type)}${a.customer ? ' — ' + a.customer : ''}
+          <div style="color:var(--text-faint); font-size:10.5px; margin-top:2px;">${timeAgo(a.created_at)}</div>
+        </div>`).join('');
+    [...m.querySelectorAll('.dropdown-item')].forEach(row => {
+      row.addEventListener('mouseenter', () => row.style.background = 'var(--surface-hover)');
+      row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+      row.addEventListener('click', () => m.remove());
+    });
+  } catch(err) {
+    m.innerHTML = `<div style="padding:16px 12px; font-size:12px; color:var(--red);">Failed to load</div>`;
+  }
+}
+
 function showChangePasswordModal(){
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
@@ -1246,6 +1351,8 @@ async function bootstrapApp(){
       loadCompletedPage(1),
       loadFraudPage(1),
       loadDashboardStats(),
+      loadFraudAnalytics(),
+      loadProfile(),
     ]);
     if(currentUser.role === 'Admin'){
       await Promise.all([loadUsers(), loadWhitelist()]);
@@ -1295,6 +1402,8 @@ async function loadDashboardStats(){
   try {
     const feed = await apiFetch('/stats/activity-feed?limit=6');
     renderActivityFeed(feed.activity);
+    const dot = document.getElementById('notifDot');
+    if(dot) dot.style.display = feed.activity.some(a => a.type === 'flagged') ? '' : 'none';
   } catch(err) { console.warn('activity feed:', err.message); }
 
   try {
@@ -1380,6 +1489,76 @@ function renderTopVendors(rows){
       </div>
       <span class="rank-value">${r.n} booking${r.n===1?'':'s'}</span>
     </div>`).join('');
+}
+
+async function loadFraudAnalytics(){
+  try {
+    const summary = await apiFetch('/stats/fraud-summary');
+    const rateEl = document.getElementById('fraudRateText');
+    if(rateEl) rateEl.textContent = summary.fraudRate + '%';
+    if(typeof drawDoughnutChart === 'function'){
+      drawDoughnutChart('chartFraudRate', [summary.fraudRate, Math.max(0, 100 - summary.fraudRate)], [cRed, '#20242E'], 0.76);
+    }
+    const preventedEl = document.getElementById('preventedLossesValue');
+    if(preventedEl) preventedEl.textContent = '$' + summary.preventedLosses.toLocaleString();
+    const confirmedEl = document.getElementById('confirmedLossesText');
+    if(confirmedEl) confirmedEl.textContent = 'Confirmed fraud $' + summary.confirmedLosses.toLocaleString();
+  } catch(err) { console.warn('fraud summary:', err.message); }
+
+  try {
+    const t = await apiFetch('/stats/fraud-triggers');
+    renderTriggerBars(t.triggers);
+  } catch(err) { console.warn('fraud triggers:', err.message); }
+
+  try {
+    const c = await apiFetch('/stats/fraud-countries');
+    renderCountryBars(c.countries);
+  } catch(err) { console.warn('fraud countries:', err.message); }
+
+  try {
+    const ft = await apiFetch('/stats/fraud-timeseries?days=14');
+    if(typeof drawGroupedBarChart === 'function'){
+      drawGroupedBarChart('chartFraudOverTime', ft.labels.map(d=>d.slice(5)), ft.data, ft.data.map(()=>0), hexToRgba(cOrange, 0.55), cRed);
+    }
+  } catch(err) { console.warn('fraud over time:', err.message); }
+}
+
+function renderTriggerBars(triggers){
+  const el = document.getElementById('triggerBars');
+  if(!el) return;
+  if(!triggers || triggers.length === 0){
+    el.innerHTML = `<div class="empty-state" style="padding:20px 10px;"><b>No triggers logged yet</b></div>`;
+    return;
+  }
+  const max = Math.max(...triggers.map(t => t.n));
+  el.innerHTML = triggers.map(t => `
+    <div class="trigger-bar-row">
+      <span class="trigger-label">${t.label}</span>
+      <div class="trigger-track"><div class="trigger-fill" style="width:${Math.round((t.n/max)*100)}%"></div></div>
+      <span class="trigger-val">${t.n}</span>
+    </div>`).join('');
+}
+
+function renderCountryBars(countries){
+  const el = document.getElementById('countryBars');
+  if(!el) return;
+  if(!countries || countries.length === 0){
+    el.innerHTML = `<div class="empty-state" style="padding:20px 10px;"><b>No flagged bookings yet</b></div>`;
+    return;
+  }
+  const max = Math.max(...countries.map(c => c.n));
+  el.innerHTML = countries.map(c => {
+    const parts = (c.country || '').split(' ');
+    const flag = parts[0] || '🏳️';
+    const name = parts.slice(1).join(' ') || c.country;
+    return `
+    <div class="country-row">
+      <span class="country-flag">${flag}</span>
+      <span class="country-name">${name}</span>
+      <div class="country-bar-track"><div class="country-bar-fill" style="width:${Math.round((c.n/max)*100)}%"></div></div>
+      <span class="country-val">${c.n}</span>
+    </div>`;
+  }).join('');
 }
 
 async function initAuthGate(){
@@ -1820,9 +1999,39 @@ function pendingRowHTML(b, idx){
   </tr>`;
 }
 
+const tableQuery = {
+  pending: { sortBy: 'created', sortDir: 'desc', q: '' },
+  completed: { sortBy: 'done', sortDir: 'desc', q: '' },
+  fraud: { q: '' },
+};
+
+let searchDebounceTO = null;
+function handleTableSearch(tableKey, value){
+  clearTimeout(searchDebounceTO);
+  searchDebounceTO = setTimeout(() => {
+    tableQuery[tableKey].q = value.trim();
+    if(tableKey === 'pending') loadPendingPage(1);
+    else if(tableKey === 'completed') loadCompletedPage(1);
+    else if(tableKey === 'fraud') loadFraudPage(1);
+  }, 350);
+}
+
+function handleGlobalSearch(value){
+  const term = value.trim();
+  if(!term) return;
+  document.querySelector('.nav-item[data-page="pending"]').click();
+  const input = document.getElementById('pendingSearchInput');
+  if(input) input.value = term;
+  tableQuery.pending.q = term;
+  loadPendingPage(1);
+  toast('Searching Pending Bookings for "' + term + '"');
+}
+
 async function loadPendingPage(page){
   try {
-    const data = await apiFetch(`/bookings/pending?page=${page}&pageSize=${PAGE_SIZE}`);
+    const t = tableQuery.pending;
+    const params = new URLSearchParams({ page, pageSize: PAGE_SIZE, sortBy: t.sortBy, sortDir: t.sortDir, q: t.q });
+    const data = await apiFetch(`/bookings/pending?${params}`);
     pendingData = data.bookings.map(mapPendingRow);
     pendingTotal = data.total;
     currentPage.pending = data.page;
@@ -1870,7 +2079,9 @@ function completedRowHTML(b){
 
 async function loadCompletedPage(page){
   try {
-    const data = await apiFetch(`/bookings/completed?page=${page}&pageSize=${PAGE_SIZE}`);
+    const t = tableQuery.completed;
+    const params = new URLSearchParams({ page, pageSize: PAGE_SIZE, sortBy: t.sortBy, sortDir: t.sortDir, q: t.q });
+    const data = await apiFetch(`/bookings/completed?${params}`);
     completedData = data.bookings;
     completedTotal = data.total;
     currentPage.completed = data.page;
@@ -1892,8 +2103,8 @@ function renderCompletedTable(){
 
 /* ---- Fraud Prevention ---- */
 function mapFraudRow(row){ return { ...row, rules: row.rules || [] }; }
-const riskBadge = s => ({high:'badge-high', medium:'badge-medium', low:'badge-low'}[s]);
-const riskLabel = s => ({high:'High Risk', medium:'Medium Risk', low:'Low Risk'}[s]);
+const riskBadge = s => ({high:'badge-high', medium:'badge-medium', low:'badge-low', hold:'badge-hold', confirmed:'badge-high', released:'badge-approved'}[s] || 'badge-medium');
+const riskLabel = s => ({high:'High Risk', medium:'Medium Risk', low:'Low Risk', hold:'On Hold', confirmed:'Confirmed Fraud', released:'Released'}[s] || s);
 const riskColor = s => s>=75 ? 'var(--red)' : s>=45 ? 'var(--amber)' : 'var(--green)';
 
 function riskRing(score){
@@ -1919,8 +2130,8 @@ function fraudRowHTML(f){
     <td>
       <div class="row-actions">
         <div class="action-icon good" title="Approve booking" onclick="updateFraudStatus('${f.id}','low')"><svg class="icon"><use href="#i-check"/></svg></div>
-        <div class="action-icon warn" title="Hold booking" onclick="rowAction('${f.id} placed on hold','warn')"><svg class="icon"><use href="#i-lock"/></svg></div>
-        <div class="action-icon" title="Request verification" onclick="rowAction('Verification requested for ${f.id}','warn')"><svg class="icon"><use href="#i-mail"/></svg></div>
+        <div class="action-icon warn" title="Hold booking" onclick="updateFraudStatus('${f.id}','hold')"><svg class="icon"><use href="#i-lock"/></svg></div>
+        <div class="action-icon" title="Request verification" onclick="requestVerification('${f.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>
         <div class="action-icon danger" title="Mark as confirmed fraud" onclick="updateFraudStatus('${f.id}','confirmed')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
       </div>
     </td>
@@ -1929,7 +2140,9 @@ function fraudRowHTML(f){
 
 async function loadFraudPage(page){
   try {
-    const data = await apiFetch(`/bookings/fraud?page=${page}&pageSize=${PAGE_SIZE}`);
+    const t = tableQuery.fraud;
+    const params = new URLSearchParams({ page, pageSize: PAGE_SIZE, q: t.q });
+    const data = await apiFetch(`/bookings/fraud?${params}`);
     fraudData = data.bookings.map(mapFraudRow);
     fraudTotal = data.total;
     currentPage.fraud = data.page;
@@ -1944,6 +2157,15 @@ async function updateFraudStatus(id, status){
     await apiFetch(`/bookings/fraud/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
     await loadFraudPage(currentPage.fraud);
     toast(id + ' status updated');
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
+}
+
+async function requestVerification(id){
+  try {
+    await apiFetch(`/bookings/fraud/${id}/request-verification`, { method: 'POST' });
+    toast('Verification request emailed for ' + id);
   } catch(err) {
     toast(err.message, 'danger');
   }
@@ -2798,6 +3020,9 @@ function menu(el, items){
       ev.stopPropagation();
       if(items[i].label === 'Sign out'){ closeMenus(); logout(); return; }
       if(items[i].label === 'Account settings'){ closeMenus(); showChangePasswordModal(); return; }
+      if(items[i].label === 'View profile'){ closeMenus(); showProfileModal(); return; }
+      if(items[i].label === 'Switch role'){ closeMenus(); toast('Role changes are managed by an Admin in Admin Settings → Users', 'warn'); return; }
+      if(items[i].label === 'Notification preferences'){ closeMenus(); showNotificationPrefsModal(); return; }
       toast(items[i].label, items[i].danger ? 'danger' : 'success');
       closeMenus();
     });
@@ -2808,15 +3033,39 @@ function menu(el, items){
 /* ============================================================
    SORTABLE TABLE HEADERS
 ============================================================ */
+const SORT_LABEL_MAP = {
+  pending: { 'Booking ID': 'id', 'Customer': 'customer', 'Amount': 'amount' },
+  completed: { 'Booking ID': 'id', 'Total Paid': 'paid' },
+};
+
 function sortToggle(th){
   const table = th.closest('table');
+  const tbody = table.querySelector('tbody');
+  const tableKey = tbody && tbody.id === 'pendingTableBody' ? 'pending' : tbody && tbody.id === 'completedTableBody' ? 'completed' : null;
+  if(!tableKey) return;
+
   table.querySelectorAll('th.sortable').forEach(t=>{ if(t!==th){ t.classList.remove('sort-asc','sort-desc'); } });
-  if(th.classList.contains('sort-asc')){ th.classList.remove('sort-asc'); th.classList.add('sort-desc'); }
-  else if(th.classList.contains('sort-desc')){ th.classList.remove('sort-desc'); }
-  else { th.classList.add('sort-asc'); }
+  let dir;
+  if(th.classList.contains('sort-asc')){ th.classList.remove('sort-asc'); th.classList.add('sort-desc'); dir = 'desc'; }
+  else if(th.classList.contains('sort-desc')){ th.classList.remove('sort-desc'); dir = null; }
+  else { th.classList.add('sort-asc'); dir = 'asc'; }
+
   const label = th.textContent.trim();
-  const dir = th.classList.contains('sort-asc') ? 'ascending' : th.classList.contains('sort-desc') ? 'descending' : null;
-  toast(dir ? `Sorted by ${label} (${dir})` : `Sort cleared on ${label}`);
+  const sortByKey = SORT_LABEL_MAP[tableKey][label];
+  if(!sortByKey) return;
+
+  const t = tableQuery[tableKey];
+  if(dir){
+    t.sortBy = sortByKey;
+    t.sortDir = dir;
+  } else {
+    t.sortBy = tableKey === 'pending' ? 'created' : 'done';
+    t.sortDir = 'desc';
+  }
+
+  toast(dir ? `Sorted by ${label} (${dir === 'asc' ? 'ascending' : 'descending'})` : `Sort cleared on ${label}`);
+  if(tableKey === 'pending') loadPendingPage(1);
+  else loadCompletedPage(1);
 }
 
 /* ============================================================
@@ -2846,12 +3095,105 @@ function tabPillClick(el, range){
 /* ============================================================
    BULK ACTIONS (Pending Bookings)
 ============================================================ */
+function csvEscape(val){
+  const s = String(val == null ? '' : val);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function downloadBlob(filename, content, mime){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+const EXPORT_COLUMNS = {
+  pending: [
+    ['id','Booking ID'], ['customer','Customer'], ['dest','Destination'], ['dates','Travel Dates'],
+    ['vendor','Airline / Hotel'], ['amount','Amount'], ['pay','Payment'], ['source','Source'],
+    ['created','Created'], ['status','Status'], ['confirmationNumber','Confirmation #'],
+  ],
+  completed: [
+    ['id','Booking ID'], ['customer','Customer'], ['dest','Destination'], ['dep','Departure'],
+    ['ret','Return'], ['paid','Total Paid'], ['method','Payment Method'], ['agent','Agent'],
+    ['conf','Confirmation #'], ['done','Completed'],
+  ],
+  fraud: [
+    ['id','Booking ID'], ['customer','Customer'], ['country','Country'], ['dest','Destination'],
+    ['amount','Amount'], ['method','Payment'], ['ip','IP Address'], ['score','Risk Score'], ['status','Status'],
+  ],
+};
+
+async function fetchAllRowsForExport(tableKey){
+  const t = tableQuery[tableKey] || {};
+  const params = new URLSearchParams({ page: 1, pageSize: 5000, q: t.q || '' });
+  if(t.sortBy){ params.set('sortBy', t.sortBy); params.set('sortDir', t.sortDir); }
+  const data = await apiFetch(`/bookings/${tableKey}?${params}`);
+  if(tableKey === 'pending') return data.bookings.map(mapPendingRow);
+  if(tableKey === 'fraud') return data.bookings.map(mapFraudRow);
+  return data.bookings;
+}
+
+async function exportTableCsv(tableKey){
+  try {
+    const rows = await fetchAllRowsForExport(tableKey);
+    if(rows.length === 0){ toast('Nothing to export', 'warn'); return; }
+    const cols = EXPORT_COLUMNS[tableKey];
+    const header = cols.map(c => csvEscape(c[1])).join(',');
+    const lines = rows.map(r => cols.map(c => csvEscape(r[c[0]])).join(','));
+    const csv = [header, ...lines].join('\n');
+    downloadBlob(`${tableKey}-bookings-${new Date().toISOString().slice(0,10)}.csv`, csv, 'text/csv');
+    toast(rows.length + ' bookings exported');
+  } catch(err) {
+    toast('Export failed: ' + err.message, 'danger');
+  }
+}
+
+async function exportTablePdf(tableKey){
+  try {
+    const rows = await fetchAllRowsForExport(tableKey);
+    if(rows.length === 0){ toast('Nothing to export', 'warn'); return; }
+    const cols = EXPORT_COLUMNS[tableKey];
+    const win = window.open('', '_blank');
+    const style = `
+      body{ font-family: Arial, sans-serif; padding:24px; color:#111; }
+      h1{ font-size:16px; margin-bottom:4px; }
+      p{ font-size:11px; color:#555; margin-bottom:16px; }
+      table{ width:100%; border-collapse:collapse; font-size:10.5px; }
+      th,td{ border:1px solid #ccc; padding:5px 7px; text-align:left; }
+      th{ background:#f2f2f2; }
+    `;
+    const theadHtml = '<tr>' + cols.map(c => `<th>${c[1]}</th>`).join('') + '</tr>';
+    const rowsHtml = rows.map(r => '<tr>' + cols.map(c => `<td>${r[c[0]] == null ? '' : r[c[0]]}</td>`).join('') + '</tr>').join('');
+    win.document.write(`<html><head><title>${tableKey} bookings</title><style>${style}</style></head><body>
+      <h1>Travel Panel — ${tableKey.charAt(0).toUpperCase()+tableKey.slice(1)} Bookings</h1>
+      <p>Exported ${new Date().toLocaleString()} · ${rows.length} records</p>
+      <table><thead>${theadHtml}</thead><tbody>${rowsHtml}</tbody></table>
+    </body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  } catch(err) {
+    toast('Export failed: ' + err.message, 'danger');
+  }
+}
+
 async function bulkAction(kind){
   const checked = [...document.querySelectorAll('.pending-row-check:checked')];
   const n = checked.length;
   if(n===0){ toast('Select at least one booking first', 'warn'); return; }
   if(kind==='approve'){
-    toast(n+' booking'+(n>1?'s':'')+' approved', 'success');
+    const ids = checked.map(cb => cb.dataset.id);
+    const reviewIds = ids.filter(id => { const b = pendingData.find(x=>x.id===id); return b && b.status === 'review'; });
+    if(reviewIds.length === 0){
+      toast('None of the selected bookings are in review', 'warn');
+    } else {
+      await Promise.all(reviewIds.map(id => apiFetch(`/bookings/pending/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'pending' }) }).catch(()=>{})));
+      await loadPendingPage(currentPage.pending);
+      toast(reviewIds.length + ' booking' + (reviewIds.length>1?'s':'') + ' approved out of review', 'success');
+    }
   } else {
     const ids = checked.map(cb => cb.dataset.id);
     await Promise.all(ids.map(id => flagBookingForFraud(id)));
