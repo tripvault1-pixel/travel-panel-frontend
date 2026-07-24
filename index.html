@@ -1,0 +1,2567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#0B0D11;
+  --bg-elevated:#0F1115;
+  --surface:#15181F;
+  --surface-2:#1B1F28;
+  --surface-hover:#20242E;
+  --border:rgba(255,255,255,0.07);
+  --border-strong:rgba(255,255,255,0.14);
+  --text:#F2F3F6;
+  --text-dim:#9AA1AF;
+  --text-faint:#5B6270;
+  --orange:#FF7A1A;
+  --orange-2:#FF9640;
+  --orange-dim:#3A2414;
+  --orange-glow:rgba(255,122,26,0.35);
+  --green:#34D399;
+  --green-dim:#123024;
+  --amber:#FBBF24;
+  --amber-dim:#332608;
+  --red:#F76161;
+  --red-dim:#3A1414;
+  --blue:#5FA8FF;
+  --blue-dim:#122036;
+  --radius-lg:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --shadow-card:0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px -12px rgba(0,0,0,0.6);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(255,122,26,0.06), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--orange-glow); color:#fff;}
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface-2); border-radius:8px; border:2px solid var(--bg);}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+:focus-visible{outline:2px solid var(--orange); outline-offset:2px; border-radius:4px;}
+
+svg.icon{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0;}
+
+/* ============ LAYOUT ============ */
+.app{display:flex; min-height:100vh;}
+
+/* ---- Sidebar ---- */
+.sidebar{
+  width:248px; flex-shrink:0;
+  background:var(--bg-elevated);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  padding:20px 14px;
+  position:sticky; top:0; height:100vh;
+  transition:width .22s ease, padding .22s ease;
+  z-index:40;
+}
+.sidebar.collapsed{width:76px;}
+.sidebar-brand{
+  display:flex; align-items:center; gap:10px;
+  padding:6px 8px 22px 8px;
+}
+.brand-mark{
+  width:34px; height:34px; border-radius:10px; flex-shrink:0;
+  background:linear-gradient(140deg, var(--orange), #C2440A);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:700; color:#0B0D11; font-size:15px;
+  box-shadow:0 4px 14px -4px var(--orange-glow);
+}
+.brand-text{display:flex; flex-direction:column; overflow:hidden; white-space:nowrap;}
+.brand-text b{font-family:var(--font-display); font-size:15px; letter-spacing:.2px;}
+.brand-text span{font-size:11px; color:var(--text-faint); font-family:var(--font-mono); letter-spacing:.5px;}
+.sidebar.collapsed .brand-text{display:none;}
+
+.nav-group-label{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-faint);
+  padding:14px 12px 6px; font-weight:600;
+}
+.sidebar.collapsed .nav-group-label{opacity:0;}
+
+.nav-item{
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:var(--radius-sm);
+  color:var(--text-dim); font-weight:500; font-size:13.5px;
+  margin-bottom:2px; position:relative; white-space:nowrap; overflow:hidden;
+  transition:background .15s, color .15s;
+}
+.nav-item:hover{background:var(--surface); color:var(--text);}
+.nav-item.active{background:var(--surface-2); color:#fff;}
+.nav-item.active::before{
+  content:''; position:absolute; left:-14px; top:8px; bottom:8px; width:3px;
+  background:var(--orange); border-radius:0 4px 4px 0;
+}
+.nav-item .badge-count{
+  margin-left:auto; background:var(--orange-dim); color:var(--orange-2);
+  font-family:var(--font-mono); font-size:10.5px; padding:2px 7px; border-radius:20px; font-weight:600;
+}
+.sidebar.collapsed .nav-item span.label, .sidebar.collapsed .badge-count{display:none;}
+.sidebar.collapsed .nav-item{justify-content:center;}
+
+.sidebar-footer{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);}
+.role-pill{
+  display:flex; align-items:center; gap:10px; padding:8px 10px;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+}
+.role-avatar{
+  width:30px; height:30px; border-radius:8px; background:linear-gradient(140deg,#2A2E38,#1B1F28);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:12px; font-weight:700; flex-shrink:0; border:1px solid var(--border-strong);
+}
+.role-meta{overflow:hidden; white-space:nowrap;}
+.role-meta b{font-size:12.5px; display:block;}
+.role-meta span{font-size:10.5px; color:var(--orange-2); font-family:var(--font-mono);}
+.sidebar.collapsed .role-meta{display:none;}
+
+/* ---- Main / topbar ---- */
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  height:64px; flex-shrink:0; position:sticky; top:0; z-index:30;
+  display:flex; align-items:center; gap:16px; padding:0 24px;
+  background:rgba(11,13,17,0.85); backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.icon-btn{
+  width:36px; height:36px; border-radius:10px; border:1px solid var(--border);
+  background:var(--surface); color:var(--text-dim); display:flex; align-items:center; justify-content:center;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.icon-btn:hover{background:var(--surface-2); color:var(--text); border-color:var(--border-strong);}
+.search-bar{
+  flex:1; max-width:420px; display:flex; align-items:center; gap:9px;
+  background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:0 12px; height:38px;
+}
+.search-bar input{
+  background:transparent; border:none; outline:none; color:var(--text); font-size:13px; width:100%; font-family:var(--font-body);
+}
+.search-bar input::placeholder{color:var(--text-faint);}
+.search-kbd{font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); border:1px solid var(--border); border-radius:5px; padding:2px 6px;}
+.topbar-right{margin-left:auto; display:flex; align-items:center; gap:10px;}
+.daterange{
+  display:flex; align-items:center; gap:8px; height:38px; padding:0 12px;
+  border:1px solid var(--border); border-radius:10px; background:var(--surface); font-size:12.5px; color:var(--text-dim); font-family:var(--font-mono);
+}
+.notif-dot{
+  position:absolute; top:7px; right:7px; width:7px; height:7px; border-radius:50%; background:var(--orange);
+  box-shadow:0 0 0 2px var(--bg-elevated);
+}
+.topbar-avatar{
+  width:36px; height:36px; border-radius:10px; background:linear-gradient(140deg, var(--orange), #B33D0B);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:13px; color:#150C05;
+  border:1px solid var(--border-strong); position:relative;
+}
+
+.content{padding:26px 28px 60px; max-width:1500px; width:100%; margin:0 auto;}
+.page{display:none; animation:fadein .35s ease;}
+.page.active{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.page-header{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; gap:16px; flex-wrap:wrap;}
+.page-eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--orange-2); margin-bottom:6px; display:flex; align-items:center; gap:8px;}
+.page-title{font-family:var(--font-display); font-size:26px; font-weight:600; letter-spacing:-.3px;}
+.page-sub{color:var(--text-dim); font-size:13px; margin-top:4px;}
+
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); transition:all .15s;
+}
+.btn:hover{background:var(--surface-2); border-color:var(--border-strong);}
+.btn-primary{
+  background:linear-gradient(135deg, var(--orange), #E06510); border:1px solid transparent; color:#160D04;
+  box-shadow:0 6px 18px -8px var(--orange-glow);
+}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-ghost{background:transparent; border:1px solid var(--border);}
+.btn-sm{padding:6px 11px; font-size:12px; border-radius:8px;}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* ============ KPI CARDS ============ */
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px;}
+.kpi-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:18px 18px 16px; box-shadow:var(--shadow-card); position:relative; overflow:hidden;
+}
+.kpi-card::after{
+  content:''; position:absolute; right:-30px; top:-30px; width:100px; height:100px; border-radius:50%;
+  background:radial-gradient(circle, var(--orange-glow), transparent 70%); opacity:.5;
+}
+.kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.kpi-icon{
+  width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  background:var(--orange-dim); color:var(--orange-2);
+}
+.kpi-icon.green{background:var(--green-dim); color:var(--green);}
+.kpi-icon.red{background:var(--red-dim); color:var(--red);}
+.kpi-icon.amber{background:var(--amber-dim); color:var(--amber);}
+.kpi-icon.blue{background:var(--blue-dim); color:var(--blue);}
+.kpi-trend{font-family:var(--font-mono); font-size:11px; display:flex; align-items:center; gap:3px; padding:3px 7px; border-radius:20px;}
+.kpi-trend.up{color:var(--green); background:var(--green-dim);}
+.kpi-trend.down{color:var(--red); background:var(--red-dim);}
+.kpi-label{font-size:12px; color:var(--text-dim); margin-bottom:5px;}
+.kpi-value{font-family:var(--font-display); font-size:25px; font-weight:600; letter-spacing:-.4px;}
+.kpi-value .unit{font-size:14px; color:var(--text-faint); font-weight:500; margin-left:2px;}
+
+/* ============ CHARTS / PANELS ============ */
+.grid-2{display:grid; grid-template-columns:1.6fr 1fr; gap:16px; margin-bottom:16px;}
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px;}
+.panel{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; box-shadow:var(--shadow-card);
+}
+.panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.panel-title{font-family:var(--font-display); font-size:15px; font-weight:600;}
+.panel-title small{display:block; font-family:var(--font-body); font-size:11.5px; color:var(--text-faint); font-weight:400; margin-top:2px;}
+.tab-pills{display:flex; gap:4px; background:var(--surface-2); padding:3px; border-radius:9px;}
+.tab-pill{padding:5px 10px; font-size:11.5px; border-radius:7px; color:var(--text-dim); font-weight:600; cursor:pointer;}
+.tab-pill.active{background:var(--orange-dim); color:var(--orange-2);}
+.chart-wrap{position:relative; height:230px;}
+.chart-wrap.sm{height:150px;}
+
+.legend-row{display:flex; gap:16px; margin-top:12px; flex-wrap:wrap;}
+.legend-item{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--text-dim);}
+.legend-dot{width:9px; height:9px; border-radius:3px;}
+
+/* ============ LISTS ============ */
+.rank-list{display:flex; flex-direction:column; gap:12px;}
+.rank-row{display:flex; align-items:center; gap:12px;}
+.rank-num{font-family:var(--font-mono); font-size:11px; color:var(--text-faint); width:16px;}
+.rank-flag{width:30px; height:30px; border-radius:8px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+.rank-meta{flex:1; min-width:0;}
+.rank-meta b{font-size:12.5px; display:block;}
+.rank-bar-track{height:5px; background:var(--surface-2); border-radius:4px; margin-top:5px; overflow:hidden;}
+.rank-bar-fill{height:100%; background:linear-gradient(90deg, var(--orange), var(--orange-2)); border-radius:4px;}
+.rank-value{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); flex-shrink:0;}
+
+.activity-feed{display:flex; flex-direction:column;}
+.activity-row{display:flex; gap:12px; padding:11px 0; border-bottom:1px solid var(--border);}
+.activity-row:last-child{border-bottom:none; padding-bottom:0;}
+.activity-dot{width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.activity-body{flex:1; min-width:0;}
+.activity-body p{font-size:12.5px;}
+.activity-body p b{font-weight:600;}
+.activity-time{font-size:11px; color:var(--text-faint); font-family:var(--font-mono); margin-top:2px;}
+
+.alert-card{
+  display:flex; gap:12px; padding:12px 14px; border-radius:var(--radius-md); border:1px solid var(--border);
+  background:var(--surface-2); margin-bottom:10px;
+}
+.alert-card:last-child{margin-bottom:0;}
+.alert-icon{width:32px; height:32px; border-radius:9px; background:var(--red-dim); color:var(--red); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.alert-body b{font-size:12.5px; display:block; margin-bottom:2px;}
+.alert-body span{font-size:11.5px; color:var(--text-dim);}
+
+/* ============ BADGES ============ */
+.badge{
+  display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600;
+  font-family:var(--font-mono); letter-spacing:.2px; white-space:nowrap;
+}
+.badge::before{content:''; width:6px; height:6px; border-radius:50%; background:currentColor;}
+.badge-pending{background:var(--amber-dim); color:var(--amber);}
+.badge-approved,.badge-completed,.badge-confirmed{background:var(--green-dim); color:var(--green);}
+.badge-cancelled,.badge-fraud{background:var(--red-dim); color:var(--red);}
+.badge-review,.badge-flagged{background:var(--orange-dim); color:var(--orange-2);}
+.badge-hold{background:var(--blue-dim); color:var(--blue);}
+.badge-low{background:var(--green-dim); color:var(--green);}
+.badge-medium{background:var(--amber-dim); color:var(--amber);}
+.badge-high{background:var(--red-dim); color:var(--red);}
+
+/* ============ TABLE CARD / TOOLBAR ============ */
+.table-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-card); overflow:hidden;}
+.table-toolbar{display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
+.filter-select{
+  display:flex; align-items:center; gap:7px; padding:8px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface-2);
+  font-size:12px; color:var(--text-dim); font-weight:500; cursor:pointer;
+}
+.filter-select:hover{border-color:var(--border-strong); color:var(--text);}
+.toolbar-search{
+  display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:0 11px; height:36px; min-width:220px;
+}
+.toolbar-search input{background:transparent; border:none; outline:none; color:var(--text); font-size:12.5px; width:100%;}
+.bulk-bar{
+  display:none; align-items:center; gap:12px; padding:10px 18px; background:var(--orange-dim); border-bottom:1px solid var(--border);
+  font-size:12.5px; color:var(--orange-2); font-weight:600;
+}
+.bulk-bar.show{display:flex;}
+
+.table-scroll{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; min-width:920px;}
+thead th{
+  position:sticky; top:0; background:var(--surface); text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.6px;
+  color:var(--text-faint); font-weight:600; padding:11px 16px; border-bottom:1px solid var(--border); white-space:nowrap; z-index:2;
+}
+thead th.sortable{cursor:pointer; user-select:none;}
+thead th.sortable:hover{color:var(--text-dim);}
+tbody td{padding:13px 16px; border-bottom:1px solid var(--border); font-size:12.5px; vertical-align:middle; white-space:nowrap;}
+tbody tr{transition:background .12s;}
+tbody tr:hover{background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+.cell-mono{font-family:var(--font-mono); color:var(--text-dim); font-size:12px;}
+.cell-strong{font-weight:600;}
+.cell-sub{font-size:11px; color:var(--text-faint); margin-top:2px;}
+.cust-cell{display:flex; align-items:center; gap:9px;}
+.hoverable-name{cursor:pointer; width:fit-content;}
+.hoverable-name:hover{opacity:.85;}
+.pax-badge{display:inline-flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:600; color:var(--orange-2); background:var(--orange-dim); border-radius:10px; padding:1px 6px; margin-left:2px;}
+.pax-hover{border-bottom:1px dashed var(--text-faint); padding-bottom:1px;}
+.pax-hover:hover{border-color:var(--orange-2); color:var(--orange-2)!important;}
+.billing-tip{animation:fadein .12s ease;}
+.cust-avatar{
+  width:28px; height:28px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; font-family:var(--font-display); flex-shrink:0;
+}
+.row-actions{display:flex; gap:5px; justify-content:flex-end;}
+.action-icon{
+  width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--text-dim);
+  border:1px solid transparent;
+}
+.action-icon svg{width:15px; height:15px;}
+.action-icon:hover{background:var(--surface-hover); border-color:var(--border); color:var(--text);}
+.action-icon.danger:hover{color:var(--red); background:var(--red-dim);}
+.action-icon.warn:hover{color:var(--orange-2); background:var(--orange-dim);}
+.action-icon.good:hover{color:var(--green); background:var(--green-dim);}
+input[type=checkbox]{accent-color:var(--orange); width:15px; height:15px;}
+
+.risk-score{display:flex; align-items:center; gap:8px;}
+.risk-ring{position:relative; width:34px; height:34px; flex-shrink:0;}
+.risk-ring svg{transform:rotate(-90deg);}
+.risk-ring .bg{stroke:var(--surface-2);}
+.risk-num{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:700;}
+
+.tag-chip{
+  display:inline-flex; align-items:center; font-size:10px; font-family:var(--font-mono); padding:3px 8px; border-radius:6px;
+  background:var(--surface-2); color:var(--text-dim); border:1px solid var(--border); margin:2px 3px 2px 0;
+}
+
+.table-footer{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-top:1px solid var(--border); flex-wrap:wrap; gap:10px;}
+.pagination{display:flex; align-items:center; gap:4px;}
+.page-btn{
+  width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--text-dim);
+  border:1px solid var(--border); background:var(--surface-2); font-family:var(--font-mono); cursor:pointer;
+}
+.dropdown-menu{animation:fadein .12s ease;}
+.dropdown-item{transition:background .1s;}
+thead th.sortable.sort-asc::after{content:' ↑'; color:var(--orange-2);}
+thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
+.page-btn.active{background:var(--orange-dim); color:var(--orange-2); border-color:transparent; font-weight:700;}
+.page-btn:hover:not(.active){background:var(--surface-hover);}
+.footer-note{font-size:11.5px; color:var(--text-faint);}
+
+/* summary cards row (completed page) */
+.summary-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px;}
+
+/* fraud page specific */
+.fraud-banner{
+  display:flex; align-items:center; gap:16px; padding:16px 20px; border-radius:var(--radius-lg);
+  background:linear-gradient(120deg, rgba(247,97,97,0.1), rgba(255,122,26,0.05)); border:1px solid rgba(247,97,97,0.25);
+  margin-bottom:20px;
+}
+.fraud-banner-icon{
+  width:44px; height:44px; border-radius:12px; background:var(--red-dim); color:var(--red);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  box-shadow:0 0 0 6px rgba(247,97,97,0.06);
+}
+.fraud-banner b{font-family:var(--font-display); font-size:15px;}
+.fraud-banner p{color:var(--text-dim); font-size:12.5px; margin-top:2px;}
+
+.risk-summary-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;}
+.risk-sum-card{
+  padding:16px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface);
+  text-align:left; position:relative;
+}
+.risk-sum-card .dot{width:8px; height:8px; border-radius:50%; margin-bottom:10px;}
+.risk-sum-card .val{font-family:var(--font-display); font-size:22px; font-weight:600;}
+.risk-sum-card .lbl{font-size:11.5px; color:var(--text-dim); margin-top:3px;}
+
+.trigger-bar-row{display:flex; align-items:center; gap:10px; margin-bottom:11px; font-size:12px;}
+.trigger-bar-row:last-child{margin-bottom:0;}
+.trigger-label{width:190px; flex-shrink:0; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.trigger-track{flex:1; height:8px; background:var(--surface-2); border-radius:5px; overflow:hidden;}
+.trigger-fill{height:100%; border-radius:5px; background:linear-gradient(90deg,var(--red),#FF8A5C);}
+.trigger-val{width:32px; text-align:right; font-family:var(--font-mono); font-size:11px; color:var(--text-faint);}
+
+.country-row{display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:12.5px;}
+.country-row:last-child{margin-bottom:0;}
+.country-flag{font-size:16px; width:22px;}
+.country-name{flex:1; color:var(--text-dim);}
+.country-bar-track{width:110px; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden;}
+.country-bar-fill{height:100%; background:linear-gradient(90deg,var(--orange),var(--orange-2)); border-radius:4px;}
+.country-val{font-family:var(--font-mono); font-size:11px; color:var(--text-faint); width:34px; text-align:right;}
+
+/* toast */
+#toast-container{position:fixed; bottom:22px; right:22px; display:flex; flex-direction:column; gap:10px; z-index:200;}
+.toast{
+  display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:12px;
+  padding:12px 16px; font-size:12.5px; font-weight:500; box-shadow:0 14px 34px -12px rgba(0,0,0,0.6); min-width:260px;
+  animation:toastin .25s ease;
+}
+.toast.success{border-left:3px solid var(--green);}
+.toast.warn{border-left:3px solid var(--orange);}
+.toast.danger{border-left:3px solid var(--red);}
+@keyframes toastin{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+/* modal */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(5,6,8,0.7); backdrop-filter:blur(3px); z-index:150;
+  display:flex; align-items:center; justify-content:center; animation:fadein .18s ease;
+}
+.modal-box{
+  width:420px; max-width:90vw; background:var(--surface); border:1px solid var(--border-strong); border-radius:var(--radius-lg);
+  padding:22px; box-shadow:0 30px 60px -20px rgba(0,0,0,0.7);
+}
+.modal-icon{width:42px; height:42px; border-radius:11px; background:var(--orange-dim); color:var(--orange-2); display:flex; align-items:center; justify-content:center; margin-bottom:14px;}
+.modal-box h3{font-family:var(--font-display); font-size:16px; margin-bottom:6px;}
+.modal-box p{color:var(--text-dim); font-size:12.5px; margin-bottom:18px;}
+.modal-actions{display:flex; gap:10px; justify-content:flex-end;}
+.detail-section-title{font-family:var(--font-display); font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--orange-2); margin:16px 0 8px; font-weight:600; display:flex; align-items:center; gap:6px;}
+.detail-section-title:first-of-type{margin-top:0;}
+.detail-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px 14px;}
+.detail-grid > div{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.detail-label{font-size:9.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.5px;}
+.detail-value{font-size:12.5px; color:var(--text); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.detail-header{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+.detail-header .cust-avatar{width:40px; height:40px; font-size:13px; border-radius:10px;}
+.detail-header b{font-size:15px; font-family:var(--font-display); display:block;}
+.detail-header span{font-size:11.5px; color:var(--text-faint); font-family:var(--font-mono);}
+
+/* Admin Settings lists */
+.list-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 12px; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); margin-bottom:8px;}
+.list-row:last-child{margin-bottom:0;}
+.list-row-main{display:flex; align-items:center; gap:10px; min-width:0;}
+.list-row-main b{font-size:12.5px; display:block;}
+.list-row-main span{font-size:11px; color:var(--text-faint); font-family:var(--font-mono);}
+
+/* Auth gate overlay */
+.auth-gate{
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(255,122,26,0.08), transparent 60%),
+    var(--bg);
+  padding:20px;
+}
+.auth-card{width:380px; max-width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:32px 30px; box-shadow:var(--shadow-card); text-align:center;}
+.auth-brand{display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:24px;}
+.auth-brand .brand-mark{width:44px; height:44px; font-size:17px;}
+.auth-spinner{width:34px; height:34px; border-radius:50%; border:3px solid var(--surface-2); border-top-color:var(--orange); animation:spin 0.8s linear infinite; margin:10px auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.auth-field{text-align:left; margin-bottom:14px;}
+.auth-field label{display:block; font-size:11px; color:var(--text-dim); margin-bottom:5px; font-weight:500;}
+.auth-field input{width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; color:var(--text); font-size:13.5px;}
+.auth-field input:focus{border-color:var(--orange);}
+.auth-error{background:var(--red-dim); color:var(--red); border-radius:8px; padding:9px 12px; font-size:12px; margin-bottom:14px; text-align:left; display:none;}
+.auth-error.show{display:block;}
+.agency-code-strip{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:linear-gradient(120deg, var(--orange-dim), var(--surface-2) 70%); border:1px solid var(--border-strong);
+  border-radius:10px; padding:11px 14px; margin-bottom:16px;
+}
+.agency-code-value{font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--orange-2); letter-spacing:.5px; margin-top:3px;}
+.flight-strip{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px;
+}
+.flight-strip-point{min-width:0;}
+.flight-strip-time{font-family:var(--font-display); font-size:18px; font-weight:600; line-height:1.1;}
+.flight-strip-tz{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin:2px 0 6px;}
+.flight-strip-code{font-family:var(--font-mono); font-size:13px; color:var(--orange-2); font-weight:600;}
+.flight-strip-date{font-size:10.5px; color:var(--text-dim); margin-top:2px;}
+.flight-strip-mid{display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; padding:0 6px;}
+.flight-strip-num{font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim);}
+.flight-strip-line{width:70px; height:1px; background:var(--border-strong); position:relative; display:flex; align-items:center; justify-content:center;}
+.flight-strip-line svg{background:var(--surface-2); padding:0 4px;}
+.flight-strip-dur{font-size:10px; color:var(--text-faint); white-space:nowrap; text-align:center;}
+
+/* empty / skeleton */
+.empty-state{padding:60px 20px; text-align:center; color:var(--text-faint);}
+.empty-state svg{width:38px; height:38px; margin-bottom:12px; opacity:.5;}
+.empty-state b{display:block; color:var(--text-dim); font-size:13.5px; margin-bottom:4px;}
+
+.skel{background:linear-gradient(100deg, var(--surface-2) 30%, var(--surface-hover) 50%, var(--surface-2) 70%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px;}
+@keyframes shimmer{0%{background-position:200% 0;} 100%{background-position:-200% 0;}}
+
+@media (max-width:1180px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .grid-3{grid-template-columns:1fr;}
+  .risk-summary-grid{grid-template-columns:repeat(2,1fr);}
+  .summary-strip{grid-template-columns:repeat(2,1fr);}
+  .sidebar{position:fixed; left:0; height:100vh;}
+}
+</style>
+</head>
+<body>
+
+<!-- ICON SPRITE -->
+<svg style="display:none">
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.4 7.8-7 9-3.6-1.2-7-4-7-9V6z"/><path d="M12 8v5"/><circle cx="12" cy="16" r="0.6" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8L4 5z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m0 0l-4-4m4 4l4-4"/><path d="M4 20h16"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+<symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h13l-2.5 4L18 12H5"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
+<symbol id="i-plane" viewBox="0 0 24 24"><path d="M10.5 3.5L4 13l3 1 2 3 2-1 .5-4L21 4c.5-.5-1-2-1.5-1.5l-8 8-4-2z"/></symbol>
+<symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+<symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 4 6 4 9s-1.5 6.3-4 9c-2.5-2.7-4-6-4-9s1.5-6.3 4-9z"/></symbol>
+<symbol id="i-user-check" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4.4 3.1-7 7-7s7 2.6 7 7"/><path d="M17 13l2 2 3-3"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0115.4-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 01-15.4 6.4L3 16"/><path d="M3 21v-5h5"/></symbol>
+<symbol id="i-empty" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M4 12h16"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/><path d="M6 15h4"/></symbol>
+<symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></symbol>
+</svg>
+
+<div id="authGate"></div>
+
+<div class="app" id="appRoot" style="display:none;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">TP</div>
+      <div class="brand-text"><b>Travel Panel</b><span>ADMIN PORTAL</span></div>
+    </div>
+
+    <div class="nav-group-label">Overview</div>
+    <a class="nav-item active" data-page="dashboard"><svg class="icon"><use href="#i-grid"/></svg><span class="label">Stats Dashboard</span></a>
+
+    <div class="nav-group-label">Bookings</div>
+    <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count">24</span></a>
+    <a class="nav-item" data-page="completed"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
+
+    <div class="nav-group-label">Security</div>
+    <a class="nav-item" data-page="fraud"><svg class="icon"><use href="#i-shield"/></svg><span class="label">Fraud Prevention</span><span class="badge-count" style="background:var(--red-dim); color:var(--red);">5</span></a>
+    <a class="nav-item" data-page="admin" id="navAdminSettings"><svg class="icon"><use href="#i-lock"/></svg><span class="label">Admin Settings</span></a>
+
+    <div class="sidebar-footer">
+      <div class="role-pill" id="sidebarProfile" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Switch role'},{label:'Account settings'},{label:'Sign out', danger:true}])">
+        <div class="role-avatar">HF</div>
+        <div class="role-meta"><b>Hunter Frishman</b><span>ADMIN</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="sidebarToggle"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <div class="search-bar">
+        <svg class="icon" style="width:16px;height:16px;color:var(--text-faint)"><use href="#i-search"/></svg>
+        <input type="text" placeholder="Search bookings, customers, confirmation #...">
+        <span class="search-kbd">⌘K</span>
+      </div>
+      <div class="topbar-right">
+        <div class="daterange" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'This month'},{label:'Jul 12 – Jul 18, 2026'},{label:'Custom range…'}])"> <svg class="icon" style="width:14px;height:14px"><use href="#i-cal"/></svg> Jul 12 – Jul 18, 2026 <svg class="icon" style="width:13px;height:13px"><use href="#i-chevron-down"/></svg></div>
+        <button class="icon-btn" style="position:relative" onclick="event.stopPropagation(); menu(this,[{label:'BK-10298 flagged for fraud review'},{label:'BK-10299 payment overdue'},{label:'BK-10287 completed successfully'},{label:'Mark all as read'}])"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot"></span></button>
+        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Account settings'},{label:'Notification preferences'},{label:'Sign out', danger:true}])">HF</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============================================================ -->
+      <!-- PAGE 1: DASHBOARD -->
+      <!-- ============================================================ -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-grid"/></svg> Live Overview</div>
+            <div class="page-title">Stats Dashboard</div>
+            <div class="page-sub">Real-time performance across all booking channels · Updated 2 min ago</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" onclick="toast('Dashboard data refreshed')"><svg class="icon" style="width:15px;height:15px"><use href="#i-refresh"/></svg> Refresh</button>
+            <button class="btn btn-primary" onclick="toast('Report exported as PDF')"><svg class="icon" style="width:15px;height:15px"><use href="#i-download"/></svg> Export Report</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Total Bookings: 2,481 across all channels this month')">
+            <div class="kpi-top"><div class="kpi-icon"><svg class="icon"><use href="#i-plane"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>12.4%</div></div>
+            <div class="kpi-label">Total Bookings</div>
+            <div class="kpi-value">2,481</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Revenue Today: $48,290 from 68 bookings')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>8.1%</div></div>
+            <div class="kpi-label">Revenue Today</div>
+            <div class="kpi-value">$48,290</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Revenue This Month: $612,140, up 21.7% vs last month')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>21.7%</div></div>
+            <div class="kpi-label">Revenue This Month</div>
+            <div class="kpi-value">$612,140</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('24 bookings awaiting confirmation or payment')">
+            <div class="kpi-top"><div class="kpi-icon amber"><svg class="icon"><use href="#i-clock"/></svg></div><div class="kpi-trend down"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-down"/></svg>3.2%</div></div>
+            <div class="kpi-label">Pending Bookings</div>
+            <div class="kpi-value">24</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('2,109 bookings completed this period')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon"><use href="#i-check"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>9.6%</div></div>
+            <div class="kpi-label">Completed Bookings</div>
+            <div class="kpi-value">2,109</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('58 bookings cancelled this period')">
+            <div class="kpi-top"><div class="kpi-icon red"><svg class="icon"><use href="#i-x-circle"/></svg></div><div class="kpi-trend down"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-down"/></svg>1.4%</div></div>
+            <div class="kpi-label">Cancelled Bookings</div>
+            <div class="kpi-value">58</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('5 active fraud alerts need review')">
+            <div class="kpi-top"><div class="kpi-icon red"><svg class="icon"><use href="#i-shield"/></svg></div><div class="kpi-trend up" style="color:var(--red); background:var(--red-dim)"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>2</div></div>
+            <div class="kpi-label">Fraud Alerts</div>
+            <div class="kpi-value">5</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('34.2% of quotes converted to bookings')">
+            <div class="kpi-top"><div class="kpi-icon blue"><svg class="icon"><use href="#i-user-check"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>0.8%</div></div>
+            <div class="kpi-label">Conversion Rate</div>
+            <div class="kpi-value">34.2<span class="unit">%</span></div>
+          </div>
+        </div>
+
+        <div class="kpi-grid" style="grid-template-columns:1fr;">
+          <div class="kpi-card" style="max-width:280px;">
+            <div class="kpi-top"><div class="kpi-icon"><svg class="icon"><use href="#i-doc"/></svg></div></div>
+            <div class="kpi-label">Average Booking Value</div>
+            <div class="kpi-value">$2,187</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Revenue Over Time<small>Daily revenue, last 14 days</small></div>
+              <div class="tab-pills"><div class="tab-pill active" onclick="tabPillClick(this,'14D')">14D</div><div class="tab-pill" onclick="tabPillClick(this,'30D')">30D</div><div class="tab-pill" onclick="tabPillClick(this,'90D')">90D</div></div>
+            </div>
+            <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Booking Status<small>Distribution this month</small></div></div>
+            <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+            <div class="legend-row">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Completed 85%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>Pending 12%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Cancelled 3%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Bookings by Day<small>Volume, last 7 days</small></div></div>
+            <div class="chart-wrap"><canvas id="chartBookings"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Fraud Alerts Trend<small>Flagged bookings, last 14 days</small></div></div>
+            <div class="chart-wrap sm"><canvas id="chartFraudTrend"></canvas></div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Top Destinations</div></div>
+            <div class="rank-list" id="topDestinations"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Top Airlines / Hotels</div></div>
+            <div class="rank-list" id="topVendors"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Fraud Alerts<small>Requires review</small></div></div>
+            <div id="dashFraudAlerts"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Recent Booking Activity<small>Latest events across the platform</small></div><button class="btn btn-sm btn-ghost" onclick="toast('Loading full activity log…')">View all</button></div>
+          <div class="activity-feed" id="activityFeed"></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 2: PENDING BOOKINGS -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-pending">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-clock"/></svg> Bookings</div>
+            <div class="page-title">Pending Bookings</div>
+            <div class="page-sub">Awaiting confirmation, payment, or review — 24 open items</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" onclick="toast('Pending bookings exported')"><svg class="icon" style="width:15px;height:15px"><use href="#i-download"/></svg> Export</button>
+            <button class="btn btn-primary" onclick="showNewBookingModal()">+ New Booking</button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input placeholder="Search by customer, booking ID..."></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'Last 90 days'},{label:'Custom range…'}])"><svg class="icon" style="width:13px;height:13px"><use href="#i-cal"/></svg> Date Range <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Bali, Indonesia'},{label:'Paris, France'},{label:'Tokyo, Japan'},{label:'Santorini, Greece'},{label:'Cancún, Mexico'},{label:'All destinations'}])"><svg class="icon" style="width:13px;height:13px"><use href="#i-globe"/></svg> Destination <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Website'},{label:'Mobile App'},{label:'Call Center'},{label:'Partner Agency'},{label:'All sources'}])">Source <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Paid'},{label:'Deposit Paid'},{label:'Awaiting Payment'},{label:'All statuses'}])">Payment Status <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Under $1,000'},{label:'$1,000 – $3,000'},{label:'$3,000 – $6,000'},{label:'Over $6,000'}])">Amount <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="toast('Advanced filter panel opened')"><svg class="icon" style="width:14px;height:14px"><use href="#i-filter"/></svg> More filters</button>
+          </div>
+          <div class="bulk-bar" id="pendingBulkBar">
+            <span id="pendingBulkCount">0 selected</span>
+            <button class="btn btn-sm" style="background:var(--green-dim); color:var(--green); border-color:transparent;" onclick="bulkAction('approve')">Approve selected</button>
+            <button class="btn btn-sm" style="background:var(--red-dim); color:var(--red); border-color:transparent;" onclick="bulkAction('flag')">Flag for review</button>
+            <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="clearBulk('pending')">Clear</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px;"><input type="checkbox" id="pendingSelectAll" onclick="toggleAll('pending', this)"></th>
+                  <th class="sortable" onclick="sortToggle(this)">Booking ID</th>
+                  <th class="sortable" onclick="sortToggle(this)">Customer</th>
+                  <th>Destination</th>
+                  <th>Travel Dates</th>
+                  <th>Airline / Hotel</th>
+                  <th class="sortable" onclick="sortToggle(this)">Amount</th>
+                  <th>Payment</th>
+                  <th>Source</th>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pendingTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="footer-note" id="pendingFooterNote">Showing 1–5 of 24 results</span>
+            <div class="pagination" id="pendingPagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 3: COMPLETED BOOKINGS -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-completed">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-check"/></svg> Bookings</div>
+            <div class="page-title">Completed Bookings</div>
+            <div class="page-sub">Confirmed and finalized travel bookings</div>
+          </div>
+          <div class="btn-row">
+            <div class="filter-select" style="cursor:pointer;" onclick="toast('Completed bookings exported as CSV')">CSV</div>
+            <div class="filter-select" style="cursor:pointer;" onclick="toast('Completed bookings exported as Excel')">Excel</div>
+            <div class="filter-select" style="cursor:pointer;" onclick="toast('Completed bookings exported as PDF')">PDF</div>
+          </div>
+        </div>
+
+        <div class="summary-strip">
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('2,109 bookings completed all-time this view')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon"><use href="#i-check"/></svg></div></div>
+            <div class="kpi-label">Total Completed Bookings</div>
+            <div class="kpi-value">2,109</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Total completed revenue: $4.61M')">
+            <div class="kpi-top"><div class="kpi-icon"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div></div>
+            <div class="kpi-label">Total Completed Revenue</div>
+            <div class="kpi-value">$4.61M</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Average booking value: $2,187')">
+            <div class="kpi-top"><div class="kpi-icon blue"><svg class="icon"><use href="#i-doc"/></svg></div></div>
+            <div class="kpi-label">Average Booking Value</div>
+            <div class="kpi-value">$2,187</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('41.6% of completed bookings are from repeat customers')">
+            <div class="kpi-top"><div class="kpi-icon amber"><svg class="icon"><use href="#i-user-check"/></svg></div></div>
+            <div class="kpi-label">Repeat Customers</div>
+            <div class="kpi-value">41.6<span class="unit">%</span></div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input placeholder="Search confirmation #, customer..."></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'Last 90 days'},{label:'Custom range…'}])"><svg class="icon" style="width:13px;height:13px"><use href="#i-cal"/></svg> Date Range <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Visa'},{label:'Mastercard'},{label:'Amex'},{label:'All methods'}])">Payment Method <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'M. Alvarez'},{label:'J. Rivera'},{label:'S. Osei'},{label:'All agents'}])">Agent <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="toast('Advanced filter panel opened')"><svg class="icon" style="width:14px;height:14px"><use href="#i-filter"/></svg> More filters</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortable" onclick="sortToggle(this)">Booking ID</th>
+                  <th>Customer</th>
+                  <th>Destination</th>
+                  <th>Departure</th>
+                  <th>Return</th>
+                  <th class="sortable" onclick="sortToggle(this)">Total Paid</th>
+                  <th>Payment Method</th>
+                  <th>Agent</th>
+                  <th>Confirmation #</th>
+                  <th>Completed</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="completedTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="footer-note" id="completedFooterNote">Showing 1–5 of 10 results</span>
+            <div class="pagination" id="completedPagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 4: FRAUD PREVENTION -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-fraud">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow" style="color:var(--red)"><svg class="icon" style="width:13px;height:13px"><use href="#i-shield"/></svg> Security</div>
+            <div class="page-title">Fraud Prevention</div>
+            <div class="page-sub">Review suspicious bookings and reduce payment fraud exposure</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" onclick="toast('Opening fraud rule configuration')"><svg class="icon" style="width:15px;height:15px"><use href="#i-doc"/></svg> Rule Config</button>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--red),#B33030); color:#fff; box-shadow:0 6px 18px -8px rgba(247,97,97,0.4);" onclick="toast('5 flagged bookings escalated to the fraud team','danger')">Escalate Queue</button>
+          </div>
+        </div>
+
+        <div class="fraud-banner">
+          <div class="fraud-banner-icon"><svg class="icon"><use href="#i-alert"/></svg></div>
+          <div><b>5 active fraud alerts need review</b><p>2 high-risk bookings have been flagged in the last 24 hours — prioritize IDs BK-10298 and BK-10301.</p></div>
+        </div>
+
+        <div class="risk-summary-grid">
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 2 high-risk bookings')"><div class="dot" style="background:var(--red)"></div><div class="val">2</div><div class="lbl">High-Risk Bookings</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 3 medium-risk bookings')"><div class="dot" style="background:var(--amber)"></div><div class="val">3</div><div class="lbl">Medium-Risk Bookings</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 9 low-risk bookings')"><div class="dot" style="background:var(--green)"></div><div class="val">9</div><div class="lbl">Low-Risk Bookings</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 4 bookings under review')"><div class="dot" style="background:var(--blue)"></div><div class="val">4</div><div class="lbl">Under Review</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 1 confirmed fraud case')"><div class="dot" style="background:#8B5CF6"></div><div class="val">1</div><div class="lbl">Confirmed Fraud</div></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Fraud Rate<small>% of total bookings flagged</small></div></div>
+            <div class="chart-wrap sm"><canvas id="chartFraudRate"></canvas></div>
+            <div style="text-align:center; margin-top:6px;"><span style="font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--red)">2.1%</span><span style="color:var(--text-faint); font-size:11.5px;"> of bookings this month</span></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Most Common Triggers</div></div>
+            <div id="triggerBars"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">High-Risk Countries<small>By flagged billing country</small></div></div>
+            <div id="countryBars"></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Fraud Alerts Over Time<small>Flagged vs. confirmed, last 14 days</small></div></div>
+            <div class="chart-wrap"><canvas id="chartFraudOverTime"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Prevented Losses<small>Estimated savings this quarter</small></div></div>
+            <div style="display:flex; flex-direction:column; justify-content:center; height:100%; gap:16px;">
+              <div><div class="kpi-value" style="font-size:32px; color:var(--green);">$186,420</div><div class="kpi-label">Blocked before payout</div></div>
+              <div class="legend-row" style="margin-top:0;">
+                <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Card fraud $94.2K</div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span>Account takeover $61.8K</div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>Promo abuse $30.4K</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input placeholder="Search booking ID, customer, IP..."></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'High risk'},{label:'Medium risk'},{label:'Low risk'},{label:'All levels'}])">Risk Level <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Under review'},{label:'On hold'},{label:'Confirmed fraud'},{label:'Released'}])">Status <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'Russia'},{label:'Nigeria'},{label:'Ukraine'},{label:'Brazil'},{label:'China'}])">Billing Country <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <div class="filter-select" style="cursor:pointer;" onclick="menu(this,[{label:'VPN / Proxy Detected'},{label:'Billing Country Mismatch'},{label:'High-Value Booking'},{label:'Duplicate Customer Details'}])">Triggered Rule <svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></div>
+            <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="toast('Advanced filter panel opened')"><svg class="icon" style="width:14px;height:14px"><use href="#i-filter"/></svg> More filters</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Customer</th>
+                  <th>Billing Country</th>
+                  <th>Destination</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                  <th>IP Address</th>
+                  <th>Device Fingerprint</th>
+                  <th>Risk Score</th>
+                  <th>Triggered Rules</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="fraudTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="footer-note" id="fraudFooterNote">Showing 1–5 of 8 flagged bookings</span>
+            <div class="pagination" id="fraudPagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 5: ADMIN SETTINGS -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-admin">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-lock"/></svg> Security</div>
+            <div class="page-title">Admin Settings</div>
+            <div class="page-sub">Manage user accounts and IP access control for this portal</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:20px; border-color:rgba(251,191,36,0.3); background:linear-gradient(120deg, rgba(251,191,36,0.06), var(--surface) 60%);">
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <svg class="icon" style="width:18px;height:18px; color:var(--amber); flex-shrink:0; margin-top:1px;"><use href="#i-alert"/></svg>
+            <div style="font-size:12.5px; color:var(--text-dim); line-height:1.6;">
+              <b style="color:var(--text);">This is a front-end simulation.</b> Login and IP checks run entirely in this browser tab — there's no server behind them. Anyone who can view this page's source or disable JavaScript can bypass it. Treat this as a UI prototype of the flow, not a real access-control boundary; genuine enforcement requires a server, reverse proxy, or WAF checking IPs before the page is ever served.
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">User Accounts<small>Email + password logins, created by an admin</small></div>
+              <button class="btn btn-sm btn-primary" onclick="showAddUserModal()">+ Add User</button>
+            </div>
+            <div id="usersList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">IP Whitelist<small>Only these IPs can reach the login page</small></div>
+              <button class="btn btn-sm btn-primary" onclick="showAddIPModal()">+ Add IP</button>
+            </div>
+            <div style="margin-bottom:12px; padding:10px 12px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div style="font-size:11.5px; color:var(--text-dim);">Your current IP: <span class="cell-mono" id="myIpDisplay" style="color:var(--text);">detecting…</span></div>
+              <button class="btn btn-sm btn-ghost" onclick="addMyIp()">Add my IP</button>
+            </div>
+            <div id="whitelistList"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+/* ============================================================
+   AUTHENTICATION — real backend calls to the Travel Panel API
+   Set API_BASE to your deployed Railway URL (Settings → Networking
+   → your generated domain), with /api on the end.
+============================================================ */
+const API_BASE = 'https://travel-panel-api-production.up.railway.app/api';
+
+let currentUser = null;
+let authToken = null;
+let detectedIP = null;
+
+// Central fetch helper — attaches the auth token and throws a
+// readable error for every other function to catch.
+async function apiFetch(path, options = {}){
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if(authToken) headers['Authorization'] = 'Bearer ' + authToken;
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  let data = null;
+  try { data = await res.json(); } catch(e){ /* no body, e.g. 204 */ }
+  if(!res.ok){
+    const err = new Error((data && data.message) || (data && data.error) || ('Request failed (' + res.status + ')'));
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+function renderCheckingScreen(){
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><div class="brand-mark">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b></div>
+        <div class="auth-spinner"></div>
+        <div style="font-size:12.5px; color:var(--text-dim);">Verifying IP access…</div>
+      </div>
+    </div>`;
+}
+
+function renderDeniedScreen(ip){
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><div class="brand-mark" style="background:linear-gradient(140deg,var(--red),#8a2323);">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b></div>
+        <div class="modal-icon" style="background:var(--red-dim); color:var(--red); margin:4px auto 14px;"><svg class="icon"><use href="#i-lock"/></svg></div>
+        <h3 style="margin-bottom:8px;">Access Denied</h3>
+        <p style="margin-bottom:4px;">Your IP address is not authorized to access this portal.</p>
+        <div class="cell-mono" style="color:var(--text-dim); margin-bottom:18px;">${ip || 'Unknown'}</div>
+        <p style="font-size:11.5px;">Contact your administrator to have this IP added to the whitelist.</p>
+      </div>
+    </div>`;
+}
+
+function renderOfflineScreen(){
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><div class="brand-mark">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b></div>
+        <div class="modal-icon" style="background:var(--amber-dim); color:var(--amber); margin:4px auto 14px;"><svg class="icon"><use href="#i-alert"/></svg></div>
+        <h3 style="margin-bottom:8px;">Can't reach the API</h3>
+        <p style="font-size:12px;">Couldn't connect to<br><span class="cell-mono">${API_BASE}</span></p>
+        <p style="font-size:11.5px; margin-top:10px;">Check that the backend is running on Railway and that <span class="cell-mono">API_BASE</span> in the page's source matches its real domain.</p>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:14px;" onclick="initAuthGate()">Retry</button>
+      </div>
+    </div>`;
+}
+
+function renderLoginScreen(ip){
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><div class="brand-mark">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b><span style="font-size:11px; color:var(--text-faint);">Sign in to continue</span></div>
+        <div class="auth-error" id="authError">Invalid email or password.</div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input id="authEmail" type="email" placeholder="you@tripwiz.com" autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:14px;" id="authSubmit">Sign In</button>
+        <div style="font-size:10.5px; color:var(--text-faint);">IP verified: <span class="cell-mono">${ip || 'unknown'}</span> · Accounts are created by an admin</div>
+      </div>
+    </div>`;
+  const submit = () => attemptLogin();
+  document.getElementById('authSubmit').onclick = submit;
+  document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') submit(); });
+  document.getElementById('authEmail').addEventListener('keydown', e => { if(e.key === 'Enter') submit(); });
+}
+
+async function attemptLogin(){
+  const email = document.getElementById('authEmail').value.trim().toLowerCase();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  const btn = document.getElementById('authSubmit');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    authToken = data.token;
+    currentUser = data.user;
+    errEl.classList.remove('show');
+    document.getElementById('authGate').innerHTML = '';
+    document.getElementById('appRoot').style.display = '';
+    updateProfileUI(currentUser);
+    await bootstrapApp();
+  } catch(err) {
+    errEl.textContent = err.status === 429 ? 'Too many attempts — try again in a few minutes.' : (err.message || 'Invalid email or password.');
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+function logout(){
+  currentUser = null;
+  authToken = null;
+  document.getElementById('appRoot').style.display = 'none';
+  renderLoginScreen(detectedIP);
+}
+
+function updateProfileUI(user){
+  const name = user.email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ') || user.email;
+  const initials = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const sidebarAvatar = document.querySelector('#sidebarProfile .role-avatar');
+  const sidebarName = document.querySelector('#sidebarProfile .role-meta b');
+  const sidebarRole = document.querySelector('#sidebarProfile .role-meta span');
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  if(sidebarAvatar) sidebarAvatar.textContent = initials;
+  if(sidebarName) sidebarName.textContent = name;
+  if(sidebarRole) sidebarRole.textContent = user.role.toUpperCase();
+  if(topbarAvatar) topbarAvatar.textContent = initials;
+  const adminNav = document.getElementById('navAdminSettings');
+  if(adminNav) adminNav.style.display = user.role === 'Admin' ? '' : 'none';
+}
+
+// Called once, right after login succeeds — loads real data from the API
+// into the pages that used to rely on in-memory demo arrays.
+async function bootstrapApp(){
+  try {
+    await Promise.all([
+      loadPendingPage(1),
+      loadCompletedPage(1),
+      loadFraudPage(1),
+    ]);
+    if(currentUser.role === 'Admin'){
+      await Promise.all([loadUsers(), loadWhitelist()]);
+    }
+  } catch(err) {
+    toast('Failed to load data from API: ' + err.message, 'danger');
+  }
+}
+
+async function initAuthGate(){
+  renderCheckingScreen();
+  let ipRes;
+  try {
+    const res = await fetch(API_BASE + '/auth/ip-check', { cache: 'no-store' });
+    detectedIP = null;
+    try { const body = await res.json(); detectedIP = body.ip; } catch(e){}
+    ipRes = res;
+  } catch(err) {
+    renderOfflineScreen();
+    return;
+  }
+  const myIpEl = document.getElementById('myIpDisplay');
+  if(myIpEl) myIpEl.textContent = detectedIP || 'unavailable';
+
+  if(ipRes.status === 403){
+    renderDeniedScreen(detectedIP);
+    return;
+  }
+  renderLoginScreen(detectedIP);
+}
+
+/* ---- Admin Settings: Users ---- */
+let users = [];
+
+async function loadUsers(){
+  const data = await apiFetch('/users');
+  users = data.users;
+  renderUsersList();
+}
+
+function renderUsersList(){
+  const el = document.getElementById('usersList');
+  if(!el) return;
+  el.innerHTML = users.map(u => `
+    <div class="list-row">
+      <div class="list-row-main">
+        <div class="cust-avatar">${u.email.slice(0,2).toUpperCase()}</div>
+        <div><b>${u.email}</b><span>${u.role}</span></div>
+      </div>
+      <div class="row-actions">
+        <div class="action-icon danger" title="Remove user" onclick="removeUser(${u.id})"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+      </div>
+    </div>`).join('');
+}
+
+function showAddUserModal(){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:400px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-user-check"/></svg></div>
+      <h3>Add User</h3>
+      <p>Create a new email + password login for this portal.</p>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Email</div>
+          <input id="nuEmail" type="email" placeholder="agent@tripwiz.com" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+        </div>
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Password</div>
+          <input id="nuPassword" type="text" placeholder="Temporary password" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px; font-family:var(--font-mono);">
+        </div>
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Role</div>
+          <select id="nuRole" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+            <option>Admin</option>
+            <option selected>Agent</option>
+            <option>Fraud Analyst</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="nuCancel">Cancel</button>
+        <button class="btn btn-primary" id="nuCreate">Add User</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#nuCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#nuCreate').onclick = async () => {
+    const email = document.getElementById('nuEmail').value.trim();
+    const password = document.getElementById('nuPassword').value;
+    const role = document.getElementById('nuRole').value;
+    if(!email || !password){ toast('Email and password are required', 'warn'); return; }
+    try {
+      await apiFetch('/users', { method: 'POST', body: JSON.stringify({ email, password, role }) });
+      await loadUsers();
+      root.remove();
+      toast('User ' + email + ' created');
+    } catch(err) {
+      toast(err.message, 'warn');
+    }
+  };
+}
+
+async function removeUser(id){
+  if(users.length <= 1){ toast('At least one user account is required', 'warn'); return; }
+  try {
+    await apiFetch('/users/' + id, { method: 'DELETE' });
+    await loadUsers();
+    toast('User removed');
+  } catch(err) {
+    toast(err.message, 'warn');
+  }
+}
+
+/* ---- Admin Settings: IP Whitelist ---- */
+let ipWhitelist = [];
+
+async function loadWhitelist(){
+  const data = await apiFetch('/whitelist');
+  ipWhitelist = data.whitelist;
+  renderWhitelistList();
+}
+
+function renderWhitelistList(){
+  const el = document.getElementById('whitelistList');
+  if(!el) return;
+  el.innerHTML = ipWhitelist.map(row => `
+    <div class="list-row">
+      <div class="list-row-main">
+        <svg class="icon" style="width:15px;height:15px;color:${row.ip==='*'?'var(--amber)':'var(--text-dim)'}"><use href="#i-globe"/></svg>
+        <div><b>${row.ip === '*' ? 'Allow all (open)' : row.ip}</b>${row.ip==='*'?'<span>No restriction — remove to enforce the whitelist</span>':''}</div>
+      </div>
+      <div class="row-actions">
+        <div class="action-icon danger" title="Remove" onclick="removeIP(${row.id})"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+      </div>
+    </div>`).join('');
+}
+
+function showAddIPModal(){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:380px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-globe"/></svg></div>
+      <h3>Add IP to Whitelist</h3>
+      <p>Only whitelisted IPs will be able to reach the login page.</p>
+      <div style="margin-bottom:18px;">
+        <div class="detail-label" style="margin-bottom:5px;">IP Address</div>
+        <input id="niIp" type="text" placeholder="e.g. 203.0.113.42" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px; font-family:var(--font-mono);">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="niCancel">Cancel</button>
+        <button class="btn btn-primary" id="niAdd">Add IP</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#niCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#niAdd').onclick = async () => {
+    const ip = document.getElementById('niIp').value.trim();
+    if(!ip){ toast('Enter an IP address', 'warn'); return; }
+    try {
+      await apiFetch('/whitelist', { method: 'POST', body: JSON.stringify({ ip }) });
+      await loadWhitelist();
+      root.remove();
+      toast(ip + ' added to whitelist');
+    } catch(err) {
+      toast(err.message, 'warn');
+    }
+  };
+}
+
+async function removeIP(id){
+  const row = ipWhitelist.find(x => x.id === id);
+  try {
+    await apiFetch('/whitelist/' + id, { method: 'DELETE' });
+    await loadWhitelist();
+    toast(row && row.ip === '*' ? 'Whitelist is now enforced — only listed IPs can log in' : 'IP removed', 'warn');
+  } catch(err) {
+    toast(err.message, 'warn');
+  }
+}
+
+async function addMyIp(){
+  if(!detectedIP){ toast('Could not detect your IP', 'warn'); return; }
+  if(ipWhitelist.some(x => x.ip === detectedIP)){ toast('Your IP is already whitelisted'); return; }
+  try {
+    await apiFetch('/whitelist', { method: 'POST', body: JSON.stringify({ ip: detectedIP }) });
+    await loadWhitelist();
+    toast('Your IP was added to the whitelist');
+  } catch(err) {
+    toast(err.message, 'warn');
+  }
+}
+
+renderUsersList();
+renderWhitelistList();
+initAuthGate();
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+item.dataset.page).classList.add('active');
+  });
+});
+document.getElementById('sidebarToggle').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.toggle('collapsed');
+});
+
+/* ============================================================
+   TOAST
+============================================================ */
+function toast(msg, type='success'){
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast '+type;
+  const icon = type==='success' ? '#i-check' : type==='danger' ? '#i-x-circle' : '#i-alert';
+  el.innerHTML = `<svg class="icon" style="width:16px;height:16px;color:${type==='success'?'var(--green)':type==='danger'?'var(--red)':'var(--orange)'}"><use href="${icon}"/></svg><span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(6px)'; el.style.transition='all .2s'; setTimeout(()=>el.remove(),200); }, 2600);
+}
+
+function toggleAll(prefix, box){
+  document.querySelectorAll('.'+prefix+'-row-check').forEach(cb=>cb.checked = box.checked);
+  updateBulk(prefix);
+}
+function updateBulk(prefix){
+  const n = document.querySelectorAll('.'+prefix+'-row-check:checked').length;
+  const bar = document.getElementById(prefix+'BulkBar');
+  if(bar){ bar.classList.toggle('show', n>0); const c=document.getElementById(prefix+'BulkCount'); if(c) c.textContent = n+' selected'; }
+}
+function clearBulk(prefix){
+  document.querySelectorAll('.'+prefix+'-row-check').forEach(cb=>cb.checked=false);
+  const sa = document.getElementById(prefix+'SelectAll'); if(sa) sa.checked=false;
+  updateBulk(prefix);
+}
+
+/* ============================================================
+   SAMPLE DATA
+============================================================ */
+const destinations = [
+  {flag:'🇮🇩', name:'Bali, Indonesia', pct:92, value:'$184K'},
+  {flag:'🇫🇷', name:'Paris, France', pct:81, value:'$162K'},
+  {flag:'🇯🇵', name:'Tokyo, Japan', pct:74, value:'$148K'},
+  {flag:'🇬🇷', name:'Santorini, Greece', pct:63, value:'$126K'},
+  {flag:'🇲🇽', name:'Cancún, Mexico', pct:55, value:'$110K'},
+];
+const vendors = [
+  {flag:'✈️', name:'Emirates Airlines', pct:88, value:'412 bookings'},
+  {flag:'🏨', name:'Marriott Bonvoy', pct:76, value:'358 bookings'},
+  {flag:'✈️', name:'Singapore Airlines', pct:69, value:'301 bookings'},
+  {flag:'🏨', name:'Four Seasons', pct:58, value:'267 bookings'},
+  {flag:'✈️', name:'Qatar Airways', pct:47, value:'214 bookings'},
+];
+function renderRankList(id, data){
+  document.getElementById(id).innerHTML = data.map((d,i)=>`
+    <div class="rank-row" style="cursor:pointer;" onclick="toast('${d.name}: ${d.value}')">
+      <span class="rank-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="rank-flag">${d.flag}</div>
+      <div class="rank-meta">
+        <b>${d.name}</b>
+        <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${d.pct}%"></div></div>
+      </div>
+      <span class="rank-value">${d.value}</span>
+    </div>`).join('');
+}
+renderRankList('topDestinations', destinations);
+renderRankList('topVendors', vendors);
+
+const dashFraud = [
+  {title:'BK-10298 flagged — VPN detected', sub:'Risk score 91 · $6,240 booking'},
+  {title:'BK-10301 flagged — card mismatch', sub:'Risk score 87 · $4,180 booking'},
+];
+document.getElementById('dashFraudAlerts').innerHTML = dashFraud.map(a=>`
+  <div class="alert-card" style="cursor:pointer;" onclick="document.querySelector('[data-page=fraud]').click(); toast('Opening fraud case for ${a.title.split(' ')[0]}','danger')">
+    <div class="alert-icon"><svg class="icon" style="width:16px;height:16px"><use href="#i-alert"/></svg></div>
+    <div class="alert-body"><b>${a.title}</b><span>${a.sub}</span></div>
+  </div>`).join('') + `<div style="text-align:center; margin-top:10px;"><button class="btn btn-sm btn-ghost" onclick="document.querySelector('[data-page=fraud]').click()">Open fraud queue →</button></div>`;
+
+const activity = [
+  {icon:'i-check', color:'green', text:'<b>BK-10287</b> completed — payment captured for Sarah Mitchell', time:'2 minutes ago'},
+  {icon:'i-alert', color:'red', text:'<b>BK-10298</b> flagged for fraud review — VPN detected', time:'14 minutes ago'},
+  {icon:'i-clock', color:'amber', text:'<b>BK-10299</b> moved to pending — awaiting payment from David Chen', time:'38 minutes ago'},
+  {icon:'i-check', color:'green', text:'<b>BK-10281</b> confirmation email resent to Amara Okafor', time:'1 hour ago'},
+  {icon:'i-x-circle', color:'red', text:'<b>BK-10265</b> cancelled by customer request', time:'2 hours ago'},
+  {icon:'i-plane', color:'blue', text:'New booking <b>BK-10305</b> created via mobile app for Lucas Bennett', time:'3 hours ago'},
+];
+document.getElementById('activityFeed').innerHTML = activity.map(a=>`
+  <div class="activity-row" style="cursor:pointer;" onclick="toast('Opening details for this event')">
+    <div class="activity-dot" style="background:var(--${a.color}-dim); color:var(--${a.color});"><svg class="icon" style="width:15px;height:15px"><use href="#${a.icon}"/></svg></div>
+    <div class="activity-body"><p>${a.text}</p><div class="activity-time">${a.time}</div></div>
+  </div>`).join('');
+
+/* ---- Pending Bookings ---- */
+const initials = n => n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+let pendingData = [];
+
+function mapPendingRow(row){
+  return {
+    id: row.id,
+    agencyCode: row.agency_code,
+    customer: row.customer,
+    dest: row.dest,
+    dates: row.dates,
+    vendor: row.vendor,
+    amount: row.amount,
+    pay: row.pay,
+    source: row.source,
+    created: row.created,
+    status: row.status,
+    dob: row.dob,
+    email: row.email,
+    phone: row.phone,
+    originCity: row.origin_city,
+    originCode: row.origin_code,
+    destCode: row.dest_code,
+    isIntl: !!row.is_intl,
+    flightClass: row.flight_class,
+    roomType: row.room_type,
+    confirmationNumber: row.confirmation_number,
+    emailSent: !!row.email_sent,
+    passportNumber: row.passport_number,
+    nationality: row.nationality,
+    passportIssued: row.passport_issued,
+    passportExpiry: row.passport_expiry,
+    billingAddress: row.billing_address,
+    billingCity: row.billing_city,
+    billingState: row.billing_state,
+    billingZip: row.billing_zip,
+    cardType: row.card_type,
+    cardLast4: row.card_last4,
+    flightNumber: row.flight_number,
+    flightStops: row.flight_stops,
+    flightDuration: row.flight_duration,
+    depDate: row.dep_date, depTime: row.dep_time, depTz: row.dep_tz,
+    arrDate: row.arr_date, arrTime: row.arr_time, arrTz: row.arr_tz,
+    passengers: (row.passengers && row.passengers.length) ? row.passengers : [{ name: row.customer, gender: 'Not on file', dob: row.dob || 'Not on file' }],
+  };
+}
+const vendorSite = {
+  'American Airlines':'https://www.aa.com',
+  'Delta Air Lines':'https://www.delta.com',
+  'United Airlines':'https://www.united.com',
+  'Southwest Airlines':'https://www.southwest.com',
+  'JetBlue Airways':'https://www.jetblue.com',
+  'Alaska Airlines':'https://www.alaskaair.com',
+  'Hawaiian Airlines':'https://www.hawaiianairlines.com',
+  'Emirates':'https://www.emirates.com',
+  'Qatar Airways':'https://www.qatarairways.com',
+  'Four Seasons Resorts':'https://www.fourseasons.com',
+  'Belmond Hotels':'https://www.belmond.com',
+};
+const payBadge = p => p==='Paid' ? 'badge-approved' : p==='Deposit Paid' ? 'badge-hold' : 'badge-pending';
+const statusBadge = s => ({pending:'badge-pending', review:'badge-review'}[s]);
+const statusLabel = s => ({pending:'Pending', review:'In Review'}[s]);
+
+/* ============================================================
+   PAGINATION (shared across Pending / Completed / Fraud tables)
+============================================================ */
+const PAGE_SIZE = 5;
+const currentPage = { pending: 1, completed: 1, fraud: 1 };
+
+function pageSlice(data, page){
+  const start = (page - 1) * PAGE_SIZE;
+  return data.slice(start, start + PAGE_SIZE);
+}
+
+function renderPagination(key, total, rerenderFn, noun){
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if(currentPage[key] > totalPages) currentPage[key] = totalPages;
+  if(currentPage[key] < 1) currentPage[key] = 1;
+  const page = currentPage[key];
+
+  const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const end = Math.min(page * PAGE_SIZE, total);
+  const noteEl = document.getElementById(key + 'FooterNote');
+  if(noteEl) noteEl.textContent = `Showing ${start}–${end} of ${total} ${noun}`;
+
+  const wrap = document.getElementById(key + 'Pagination');
+  if(!wrap) return;
+  let html = `<div class="page-btn" onclick="goToPage('${key}', ${page-1})">‹</div>`;
+  for(let n = 1; n <= totalPages; n++){
+    html += `<div class="page-btn${n===page?' active':''}" onclick="goToPage('${key}', ${n})">${n}</div>`;
+  }
+  html += `<div class="page-btn" onclick="goToPage('${key}', ${page+1})">›</div>`;
+  wrap.innerHTML = html;
+  wrap.dataset.rerender = key;
+}
+
+let pendingTotal = 0, completedTotal = 0, fraudTotal = 0;
+
+async function goToPage(key, n){
+  const totalMap = { pending: pendingTotal, completed: completedTotal, fraud: fraudTotal };
+  const totalPages = Math.max(1, Math.ceil(totalMap[key] / PAGE_SIZE));
+  if(n < 1 || n > totalPages) return;
+  if(key === 'pending') await loadPendingPage(n);
+  else if(key === 'completed') await loadCompletedPage(n);
+  else if(key === 'fraud') await loadFraudPage(n);
+  const section = document.getElementById('page-' + key);
+  if(section) section.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
+function pendingRowHTML(b, idx){
+  return `
+  <tr>
+    <td><input type="checkbox" class="pending-row-check" data-id="${b.id}" onclick="updateBulk('pending')"></td>
+    <td class="cell-mono cell-strong">${b.id}${b.confirmationNumber?`<div class="cell-sub">PNR: ${b.confirmationNumber}</div>`:''}</td>
+    <td><div class="cust-cell hoverable-name" onmouseenter="showBillingTip(this,'${b.id}','pending')" onmouseleave="hideBillingTip()"><div class="cust-avatar">${initials(b.customer)}</div>${b.customer}${b.passengers.length>1?`<span class="pax-badge">+${b.passengers.length-1}</span>`:''}</div></td>
+    <td>${b.dest}</td>
+    <td class="cell-mono">${b.dates}</td>
+    <td>${b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
+    <td class="cell-strong">$${b.amount.toLocaleString()}</td>
+    <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
+    <td>${b.source}</td>
+    <td class="cell-mono">${b.created}</td>
+    <td><span class="badge ${statusBadge(b.status)}">${statusLabel(b.status)}</span></td>
+    <td>
+      <div class="row-actions">
+        <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}')"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon good" title="Generate VCC to make the purchase" onclick="showVCCModal('${b.id}', ${b.amount}, '${b.vendor.replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-card"/></svg></div>
+        <div class="action-icon" title="Open ${b.vendor} website" onclick="openVendorSite('${b.vendor.replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-external"/></svg></div>
+        <div class="action-icon" title="Edit booking" onclick="showEditBookingModal('${b.id}')"><svg class="icon"><use href="#i-edit"/></svg></div>
+        ${b.confirmationNumber ? `<div class="action-icon ${b.emailSent?'good':'warn'}" title="${b.emailSent?'Resend confirmation email':'Build/Send confirmation email'}" onclick="showEmailModal('${b.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>` : ''}
+        <div class="action-icon warn" title="Flag for fraud review" onclick="showFlagFraudModal('${b.id}')"><svg class="icon"><use href="#i-flag"/></svg></div>
+        <div class="action-icon danger" title="Cancel booking" onclick="showModal('cancel','${b.id}')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+async function loadPendingPage(page){
+  try {
+    const data = await apiFetch(`/bookings/pending?page=${page}&pageSize=${PAGE_SIZE}`);
+    pendingData = data.bookings.map(mapPendingRow);
+    pendingTotal = data.total;
+    currentPage.pending = data.page;
+    renderPendingTable();
+  } catch(err) {
+    toast('Failed to load pending bookings: ' + err.message, 'danger');
+  }
+}
+
+function renderPendingTable(){
+  const tbody = document.getElementById('pendingTableBody');
+  if(pendingData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><svg class="icon" style="width:38px;height:38px;margin-bottom:12px;opacity:.5"><use href="#i-empty"/></svg><b>No pending bookings</b><div>Create one with "+ New Booking" above.</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = pendingData.map((b,idx)=>pendingRowHTML(b,idx)).join('');
+  }
+  renderPagination('pending', pendingTotal, null, 'results');
+}
+
+/* ---- Completed Bookings ---- */
+function completedRowHTML(b){
+  return `
+  <tr>
+    <td class="cell-mono cell-strong">${b.id}</td>
+    <td><div class="cust-cell"><div class="cust-avatar">${initials(b.customer)}</div>${b.customer}</div></td>
+    <td>${b.dest}</td>
+    <td class="cell-mono">${b.dep}</td>
+    <td class="cell-mono">${b.ret}</td>
+    <td class="cell-strong">$${(b.paid||0).toLocaleString()}</td>
+    <td>${b.method||''}</td>
+    <td>${b.agent||''}</td>
+    <td class="cell-mono">${b.conf||''}</td>
+    <td class="cell-mono">${b.done||''}</td>
+    <td><span class="badge badge-completed">Completed</span></td>
+    <td>
+      <div class="row-actions">
+        <div class="action-icon" title="View itinerary" onclick="showModal('view','${b.id}')"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon" title="Download invoice" onclick="rowAction('Invoice downloaded for ${b.id}','success')"><svg class="icon"><use href="#i-download"/></svg></div>
+        <div class="action-icon" title="Resend confirmation email" onclick="rowAction('Confirmation resent for ${b.id}','success')"><svg class="icon"><use href="#i-mail"/></svg></div>
+        <div class="action-icon" title="More" onclick="rowAction('Options for ${b.id}','success')"><svg class="icon"><use href="#i-more"/></svg></div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+async function loadCompletedPage(page){
+  try {
+    const data = await apiFetch(`/bookings/completed?page=${page}&pageSize=${PAGE_SIZE}`);
+    completedData = data.bookings;
+    completedTotal = data.total;
+    currentPage.completed = data.page;
+    renderCompletedTable();
+  } catch(err) {
+    toast('Failed to load completed bookings: ' + err.message, 'danger');
+  }
+}
+
+function renderCompletedTable(){
+  const tbody = document.getElementById('completedTableBody');
+  if(completedData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><svg class="icon" style="width:38px;height:38px;margin-bottom:12px;opacity:.5"><use href="#i-empty"/></svg><b>No completed bookings yet</b><div>They will show up here once bookings are marked complete.</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = completedData.map(b => completedRowHTML(b)).join('');
+  }
+  renderPagination('completed', completedTotal, null, 'results');
+}
+
+/* ---- Fraud Prevention ---- */
+function mapFraudRow(row){ return { ...row, rules: row.rules || [] }; }
+const riskBadge = s => ({high:'badge-high', medium:'badge-medium', low:'badge-low'}[s]);
+const riskLabel = s => ({high:'High Risk', medium:'Medium Risk', low:'Low Risk'}[s]);
+const riskColor = s => s>=75 ? 'var(--red)' : s>=45 ? 'var(--amber)' : 'var(--green)';
+
+function riskRing(score){
+  const r=14, c=2*Math.PI*r, off=c-(score/100)*c;
+  const col = riskColor(score);
+  return `<div class="risk-ring"><svg width="34" height="34"><circle class="bg" cx="17" cy="17" r="${r}" fill="none" stroke-width="3"/><circle cx="17" cy="17" r="${r}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><div class="risk-num" style="color:${col}">${score}</div></div>`;
+}
+
+function fraudRowHTML(f){
+  return `
+  <tr>
+    <td class="cell-mono cell-strong">${f.id}</td>
+    <td><div class="cust-cell hoverable-name" onmouseenter="showBillingTip(this,'${f.id}','fraud')" onmouseleave="hideBillingTip()"><div class="cust-avatar">${initials(f.customer)}</div>${f.customer}</div></td>
+    <td>${f.country}</td>
+    <td>${f.dest}</td>
+    <td class="cell-strong">$${f.amount.toLocaleString()}</td>
+    <td class="cell-mono">${f.method}</td>
+    <td class="cell-mono">${f.ip}</td>
+    <td class="cell-mono">${f.device}</td>
+    <td><div class="risk-score">${riskRing(f.score)}</div></td>
+    <td style="white-space:normal; min-width:220px;">${f.rules.map(r=>`<span class="tag-chip">${r}</span>`).join('')}</td>
+    <td><span class="badge ${riskBadge(f.status)}">${riskLabel(f.status)}</span></td>
+    <td>
+      <div class="row-actions">
+        <div class="action-icon good" title="Approve booking" onclick="updateFraudStatus('${f.id}','low')"><svg class="icon"><use href="#i-check"/></svg></div>
+        <div class="action-icon warn" title="Hold booking" onclick="rowAction('${f.id} placed on hold','warn')"><svg class="icon"><use href="#i-lock"/></svg></div>
+        <div class="action-icon" title="Request verification" onclick="rowAction('Verification requested for ${f.id}','warn')"><svg class="icon"><use href="#i-mail"/></svg></div>
+        <div class="action-icon danger" title="Mark as confirmed fraud" onclick="updateFraudStatus('${f.id}','confirmed')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+async function loadFraudPage(page){
+  try {
+    const data = await apiFetch(`/bookings/fraud?page=${page}&pageSize=${PAGE_SIZE}`);
+    fraudData = data.bookings.map(mapFraudRow);
+    fraudTotal = data.total;
+    currentPage.fraud = data.page;
+    renderFraudTable();
+  } catch(err) {
+    toast('Failed to load fraud queue: ' + err.message, 'danger');
+  }
+}
+
+async function updateFraudStatus(id, status){
+  try {
+    await apiFetch(`/bookings/fraud/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    await loadFraudPage(currentPage.fraud);
+    toast(id + ' status updated');
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
+}
+
+function renderFraudTable(){
+  const tbody = document.getElementById('fraudTableBody');
+  if(fraudData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><svg class="icon" style="width:38px;height:38px;margin-bottom:12px;opacity:.5"><use href="#i-empty"/></svg><b>No flagged bookings</b><div>Bookings flagged for fraud review will appear here.</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = fraudData.map(f=>fraudRowHTML(f)).join('');
+  }
+  renderPagination('fraud', fraudTotal, null, 'flagged bookings');
+}
+
+const triggers = [
+  {label:'VPN / Proxy Detected', pct:88},
+  {label:'Billing Country Mismatch', pct:71},
+  {label:'High-Value Booking', pct:64},
+  {label:'Multiple Failed Payments', pct:52},
+  {label:'Duplicate Customer Details', pct:39},
+  {label:'Last-Minute Intl Booking', pct:31},
+];
+document.getElementById('triggerBars').innerHTML = triggers.map(t=>`
+  <div class="trigger-bar-row" style="cursor:pointer;" onclick="toast('Filtering fraud queue by: ${t.label}')">
+    <span class="trigger-label">${t.label}</span>
+    <div class="trigger-track"><div class="trigger-fill" style="width:${t.pct}%"></div></div>
+    <span class="trigger-val">${t.pct}%</span>
+  </div>`).join('');
+
+/* Country bars */
+const countries = [
+  {flag:'🇷🇺', name:'Russia', pct:100, val:'34'},
+  {flag:'🇳🇬', name:'Nigeria', pct:76, val:'26'},
+  {flag:'🇺🇦', name:'Ukraine', pct:59, val:'20'},
+  {flag:'🇧🇷', name:'Brazil', pct:41, val:'14'},
+  {flag:'🇨🇳', name:'China', pct:26, val:'9'},
+];
+document.getElementById('countryBars').innerHTML = countries.map(c=>`
+  <div class="country-row" style="cursor:pointer;" onclick="toast('Filtering fraud queue by billing country: ${c.name}')">
+    <span class="country-flag">${c.flag}</span>
+    <span class="country-name">${c.name}</span>
+    <div class="country-bar-track"><div class="country-bar-fill" style="width:${c.pct}%"></div></div>
+    <span class="country-val">${c.val}</span>
+  </div>`).join('');
+
+/* ============================================================
+   NATIVE CANVAS CHARTS (no external library — always renders)
+============================================================ */
+const cOrange = '#FF7A1A', cOrange2='#FF9640', cGreen='#34D399', cAmber='#FBBF24', cRed='#F76161', cBlue='#5FA8FF';
+
+function hexToRgba(hex, alpha){
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function setupCanvas(id){
+  const canvas = document.getElementById(id);
+  if(!canvas) return null;
+  const wrap = canvas.parentElement;
+  const rect = wrap.getBoundingClientRect();
+  const w = Math.max(rect.width, 40), h = Math.max(rect.height, 40);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawGridLines(ctx, pad, w, h, rows){
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for(let i = 0; i <= rows; i++){
+    const y = pad.top + ((h - pad.top - pad.bottom) / rows) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+  }
+}
+
+function drawLineChart(id, labels, data, opts = {}){
+  const setup = setupCanvas(id);
+  if(!setup) return;
+  const { ctx, w, h } = setup;
+  const color = opts.color || cOrange;
+  const showGrid = opts.grid !== false;
+  const showLabels = opts.labels !== false;
+  const pad = { top: 10, right: 8, bottom: showLabels ? 20 : 4, left: 8 };
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = (max - min) || 1;
+  const plotW = w - pad.left - pad.right, plotH = h - pad.top - pad.bottom;
+  const stepX = data.length > 1 ? plotW / (data.length - 1) : 0;
+  const points = data.map((v, i) => ({ x: pad.left + i * stepX, y: pad.top + plotH - ((v - min) / range) * plotH }));
+
+  if(showGrid) drawGridLines(ctx, pad, w, h, 3);
+
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+  grad.addColorStop(0, hexToRgba(color, 0.35));
+  grad.addColorStop(1, hexToRgba(color, 0));
+  ctx.beginPath();
+  points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.lineTo(points[points.length - 1].x, pad.top + plotH);
+  ctx.lineTo(points[0].x, pad.top + plotH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.stroke();
+
+  if(showLabels && labels){
+    ctx.fillStyle = '#5B6270';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    const skip = Math.ceil(labels.length / 7);
+    labels.forEach((lab, i) => { if(i % skip === 0) ctx.fillText(lab, points[i].x, h - 5); });
+  }
+}
+
+function drawBarChart(id, labels, data, color, opts = {}){
+  const setup = setupCanvas(id);
+  if(!setup) return;
+  const { ctx, w, h } = setup;
+  const pad = { top: 10, right: 8, bottom: 20, left: 8 };
+  const max = Math.max(...data) * 1.15 || 1;
+  const plotW = w - pad.left - pad.right, plotH = h - pad.top - pad.bottom;
+  const slot = plotW / data.length;
+  const barW = Math.min(slot * 0.55, 34);
+
+  drawGridLines(ctx, pad, w, h, 3);
+
+  data.forEach((v, i) => {
+    const barH = (v / max) * plotH;
+    const x = pad.left + slot * i + (slot - barW) / 2;
+    const y = pad.top + plotH - barH;
+    const r = Math.min(6, barW / 2);
+    ctx.beginPath();
+    ctx.moveTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.arcTo(x + barW, y, x + barW, y + r, r);
+    ctx.lineTo(x + barW, y + barH + y === y ? y + barH : y + barH);
+    ctx.lineTo(x + barW, pad.top + plotH);
+    ctx.lineTo(x, pad.top + plotH);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+
+  ctx.fillStyle = '#5B6270';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  labels.forEach((lab, i) => ctx.fillText(lab, pad.left + slot * i + slot / 2, h - 5));
+}
+
+function drawGroupedBarChart(id, labels, seriesA, seriesB, colorA, colorB){
+  const setup = setupCanvas(id);
+  if(!setup) return;
+  const { ctx, w, h } = setup;
+  const pad = { top: 22, right: 8, bottom: 20, left: 8 };
+  const max = Math.max(...seriesA, ...seriesB) * 1.25 || 1;
+  const plotW = w - pad.left - pad.right, plotH = h - pad.top - pad.bottom;
+  const slot = plotW / labels.length;
+  const barW = Math.min(slot * 0.32, 12);
+  const gap = 3;
+
+  drawGridLines(ctx, pad, w, h, 3);
+
+  const drawBar = (x, v, color) => {
+    const barH = (v / max) * plotH;
+    const y = pad.top + plotH - barH;
+    const r = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y + r);
+    ctx.arcTo(x, y, x + barW, y, r);
+    ctx.arcTo(x + barW, y, x + barW, y + r, r);
+    ctx.lineTo(x + barW, pad.top + plotH);
+    ctx.lineTo(x, pad.top + plotH);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+
+  labels.forEach((lab, i) => {
+    const cx = pad.left + slot * i + slot / 2;
+    drawBar(cx - barW - gap / 2, seriesA[i], colorA);
+    drawBar(cx + gap / 2, seriesB[i], colorB);
+  });
+
+  ctx.fillStyle = '#5B6270';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  const skip = Math.ceil(labels.length / 7);
+  labels.forEach((lab, i) => { if(i % skip === 0) ctx.fillText(lab, pad.left + slot * i + slot / 2, h - 5); });
+
+  ctx.textAlign = 'left';
+  const legendY = 12;
+  ctx.fillStyle = colorA; ctx.beginPath(); ctx.arc(pad.left + 4, legendY, 4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#9AA1AF'; ctx.font = '10px Inter, sans-serif'; ctx.fillText('Flagged', pad.left + 12, legendY + 3);
+  ctx.fillStyle = colorB; ctx.beginPath(); ctx.arc(pad.left + 82, legendY, 4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#9AA1AF'; ctx.fillText('Confirmed Fraud', pad.left + 90, legendY + 3);
+}
+
+function drawDoughnutChart(id, values, colors, cutout = 0.72){
+  const setup = setupCanvas(id);
+  if(!setup) return;
+  const { ctx, w, h } = setup;
+  const cx = w / 2, cy = h / 2;
+  const outerR = Math.min(w, h) / 2 - 4;
+  const innerR = outerR * cutout;
+  const total = values.reduce((a, b) => a + b, 0) || 1;
+  let start = -Math.PI / 2;
+  values.forEach((v, i) => {
+    const angle = (v / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, start, start + angle);
+    ctx.arc(cx, cy, innerR, start + angle, start, true);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    start += angle;
+  });
+}
+
+function renderRevenueChart(range){
+  const n = range === '14D' ? 14 : range === '30D' ? 30 : 90;
+  drawLineChart('chartRevenue', genLabels(n), genSeries(n, 42000, 9000), { color: cOrange });
+}
+renderRevenueChart('14D');
+
+drawDoughnutChart('chartStatus', [85, 12, 3], [cGreen, cAmber, cRed], 0.72);
+
+drawBarChart('chartBookings',
+  ['Jul 12','Jul 13','Jul 14','Jul 15','Jul 16','Jul 17','Jul 18'],
+  [62,74,58,91,83,97,68], cOrange2);
+
+drawLineChart('chartFraudTrend',
+  null,
+  [1,2,1,3,2,1,2,4,3,2,3,5,4,5],
+  { color: cRed, grid: false, labels: false });
+
+drawDoughnutChart('chartFraudRate', [2.1, 97.9], [cRed, '#20242E'], 0.76);
+
+drawGroupedBarChart('chartFraudOverTime',
+  ['Jul 5','Jul 6','Jul 7','Jul 8','Jul 9','Jul 10','Jul 11','Jul 12','Jul 13','Jul 14','Jul 15','Jul 16','Jul 17','Jul 18'],
+  [3,4,2,5,3,4,3,6,5,4,5,7,6,5],
+  [0,1,0,1,0,0,1,1,0,1,0,1,1,1],
+  hexToRgba(cOrange, 0.55), cRed);
+
+window.addEventListener('resize', () => {
+  clearTimeout(window._chartResizeTO);
+  window._chartResizeTO = setTimeout(() => {
+    const activeRange = document.querySelector('.tab-pill.active');
+    renderRevenueChart(activeRange ? activeRange.textContent.trim() : '14D');
+    drawDoughnutChart('chartStatus', [85, 12, 3], [cGreen, cAmber, cRed], 0.72);
+    drawBarChart('chartBookings', ['Jul 12','Jul 13','Jul 14','Jul 15','Jul 16','Jul 17','Jul 18'], [62,74,58,91,83,97,68], cOrange2);
+    drawLineChart('chartFraudTrend', null, [1,2,1,3,2,1,2,4,3,2,3,5,4,5], { color: cRed, grid: false, labels: false });
+    drawDoughnutChart('chartFraudRate', [2.1, 97.9], [cRed, '#20242E'], 0.76);
+    drawGroupedBarChart('chartFraudOverTime',
+      ['Jul 5','Jul 6','Jul 7','Jul 8','Jul 9','Jul 10','Jul 11','Jul 12','Jul 13','Jul 14','Jul 15','Jul 16','Jul 17','Jul 18'],
+      [3,4,2,5,3,4,3,6,5,4,5,7,6,5], [0,1,0,1,0,0,1,1,0,1,0,1,1,1], hexToRgba(cOrange, 0.55), cRed);
+  }, 150);
+});
+
+/* ============================================================
+   MODALS + ROW ACTIONS
+============================================================ */
+function rowAction(msg, type){ toast(msg, type); }
+
+/* ============================================================
+   OPEN VENDOR (AIRLINE / HOTEL) WEBSITE
+============================================================ */
+function openVendorSite(vendor){
+  const url = vendorSite[vendor];
+  if(url){
+    window.open(url, '_blank', 'noopener');
+    toast('Opening '+vendor+' website');
+  } else {
+    toast('No website on file for '+vendor, 'warn');
+  }
+}
+
+/* ============================================================
+   GENERATE VIRTUAL CARD (VCC) TO MAKE THE PURCHASE
+============================================================ */
+function showVCCModal(bookingId, amount, vendor){
+  const digits = () => Math.floor(1000 + Math.random()*9000);
+  const cardNum = ['4009', digits(), digits(), digits()].join(' ');
+  const now = new Date();
+  const expMonth = String(((now.getMonth()+25) % 12) + 1).padStart(2,'0');
+  const expYear = String((now.getFullYear()+2)).slice(-2);
+  const cvv = Math.floor(100 + Math.random()*900);
+  const limit = amount + 50;
+
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:420px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-card"/></svg></div>
+      <h3>Virtual Card for ${bookingId}</h3>
+      <p>Single-use TripWiz LLC virtual card issued to pay ${vendor} directly for this booking.</p>
+      <div style="background:linear-gradient(135deg, #2A1608, var(--surface-2) 65%); border:1px solid var(--border-strong); border-radius:14px; padding:20px; margin-bottom:16px; position:relative; overflow:hidden;">
+        <div style="position:absolute; right:-20px; top:-20px; width:110px; height:110px; border-radius:50%; background:radial-gradient(circle, var(--orange-glow), transparent 70%); opacity:.4;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; position:relative;">
+          <div>
+            <div style="font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:.3px;">TripWiz LLC</div>
+            <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:.5px; margin-top:2px;">VIRTUAL CORPORATE CARD</div>
+          </div>
+          <span title="Training use only" style="display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; border:1px solid var(--border-strong); color:var(--amber); flex-shrink:0;"><svg class="icon" style="width:14px;height:14px"><use href="#i-alert"/></svg></span>
+        </div>
+        <div style="font-family:var(--font-mono); font-size:18px; letter-spacing:2px; margin-bottom:18px; position:relative;">${cardNum}</div>
+        <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); position:relative;">
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">EXPIRES</div>${expMonth}/${expYear}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">CVV</div>${cvv}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">LIMIT</div>$${limit.toLocaleString()}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">ISSUER</div>TripWiz</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="vccClose">Close</button>
+        <button class="btn btn-primary" id="vccCopy">Copy card details</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#vccClose').onclick = ()=>root.remove();
+  root.addEventListener('click', e=>{ if(e.target===root) root.remove(); });
+  root.querySelector('#vccCopy').onclick = ()=>{
+    const text = `Card: ${cardNum}  Exp: ${expMonth}/${expYear}  CVV: ${cvv}  Limit: $${limit.toLocaleString()}`;
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(()=>{}); }
+    toast('Card details copied — booking '+bookingId);
+    root.remove();
+  };
+}
+
+/* ============================================================
+   BOOKING DETAIL VIEW (eye icon) — traveler + flight + passport info
+============================================================ */
+/* ============================================================
+   NEW BOOKING (+ New Booking button)
+============================================================ */
+const US_STATE_CODES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
+
+function nextBookingId(){
+  const nums = pendingData.map(b => parseInt(b.id.replace('BK-',''), 10)).filter(n => !isNaN(n));
+  const max = nums.length ? Math.max(...nums) : 10322;
+  return 'BK-' + (max + 1);
+}
+
+function showNewBookingModal(){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:440px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-plane"/></svg></div>
+      <h3>New Booking</h3>
+      <p>Create a new pending booking. It will appear at the top of the Pending Bookings table.</p>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Customer Name *</div>
+          <input id="nbCustomer" type="text" placeholder="e.g. Sarah Mitchell" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+        </div>
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Destination *</div>
+          <input id="nbDest" type="text" placeholder="e.g. Miami, FL or Paris, France" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+        </div>
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Travel Dates</div>
+          <input id="nbDates" type="text" placeholder="e.g. Aug 10 – Aug 17, 2027" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <div class="detail-label" style="margin-bottom:5px;">Airline / Hotel</div>
+            <input id="nbVendor" type="text" placeholder="e.g. Delta Air Lines" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+          </div>
+          <div style="width:120px;">
+            <div class="detail-label" style="margin-bottom:5px;">Amount *</div>
+            <input id="nbAmount" type="number" placeholder="1200" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <div class="detail-label" style="margin-bottom:5px;">Source</div>
+            <select id="nbSource" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+              <option>Website</option>
+              <option>Partner Agency</option>
+              <option>Call Center</option>
+              <option>Mobile App</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <div class="detail-label" style="margin-bottom:5px;">Class</div>
+            <select id="nbClass" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+              <option>Basic Economy</option>
+              <option selected>Economy</option>
+              <option>Main Cabin</option>
+              <option>Business</option>
+              <option>First</option>
+              <option value="">N/A (Hotel)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="nbCancel">Cancel</button>
+        <button class="btn btn-primary" id="nbCreate">Create Booking</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#nbCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#nbCreate').onclick = async () => {
+    const customer = document.getElementById('nbCustomer').value.trim();
+    const dest = document.getElementById('nbDest').value.trim();
+    const amountRaw = document.getElementById('nbAmount').value.trim();
+    if(!customer || !dest || !amountRaw){
+      toast('Customer name, destination, and amount are required', 'warn');
+      return;
+    }
+    const amount = Math.max(0, parseInt(amountRaw, 10) || 0);
+    const dates = document.getElementById('nbDates').value.trim() || 'Dates TBD';
+    const vendor = document.getElementById('nbVendor').value.trim() || 'TBD';
+    const source = document.getElementById('nbSource').value;
+    const flightClass = document.getElementById('nbClass').value;
+
+    const stateMatch = dest.match(/,\s*([A-Z]{2})$/);
+    const isIntl = !(stateMatch && US_STATE_CODES.includes(stateMatch[1]));
+
+    try {
+      await apiFetch('/bookings/pending', {
+        method: 'POST',
+        body: JSON.stringify({ customer, dest, dates, vendor, amount, source, isIntl, flightClass: flightClass || undefined }),
+      });
+      await loadPendingPage(1);
+      root.remove();
+      toast('Booking created for ' + customer);
+    } catch(err) {
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+/* ============================================================
+   FLAG FOR FRAUD REVIEW — moves a booking from Pending into the
+   Fraud Prevention queue (via API)
+============================================================ */
+function randomIP(){
+  return `${Math.floor(Math.random()*223)+1}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
+}
+function randomFingerprint(){
+  const hex = () => Math.floor(Math.random()*0xfffff).toString(16).padStart(5,'0');
+  return `fp_${hex()}…${hex().slice(0,4)}`;
+}
+
+async function flagBookingForFraud(id){
+  try {
+    await apiFetch(`/bookings/pending/${id}/flag`, {
+      method: 'POST',
+      body: JSON.stringify({ ip: randomIP(), device: randomFingerprint() }),
+    });
+    await Promise.all([loadPendingPage(1), loadFraudPage(1)]);
+    return true;
+  } catch(err) {
+    toast(err.message, 'danger');
+    return false;
+  }
+}
+
+function showFlagFraudModal(id){
+  const b = pendingData.find(x => x.id === id);
+  if(!b) return;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-icon" style="background:var(--red-dim); color:var(--red);"><svg class="icon"><use href="#i-flag"/></svg></div>
+      <h3>Flag ${b.id} for fraud review?</h3>
+      <p>${b.customer}'s booking to ${b.dest} ($${b.amount.toLocaleString()}) will be removed from Pending Bookings and moved into the Fraud Prevention queue for review.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="flagCancel">Go back</button>
+        <button class="btn" style="background:var(--red); border-color:transparent; color:#fff;" id="flagConfirm">Flag Booking</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#flagCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#flagConfirm').onclick = async () => {
+    const ok = await flagBookingForFraud(id);
+    root.remove();
+    if(ok) toast(id + ' moved to Fraud Review', 'danger');
+  };
+}
+
+function showEditBookingModal(id){
+  const b = pendingData.find(x => x.id === id);
+  if(!b) return;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  document.body.appendChild(root);
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  renderEditStep(root, b);
+}
+
+function renderEditStep(root, b){
+  root.innerHTML = `
+    <div class="modal-box" style="width:440px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-edit"/></svg></div>
+      <h3>Edit Booking — ${b.id}</h3>
+      <p>${b.customer} · ${b.dest} · ${b.vendor}</p>
+      <div style="margin-bottom:18px;">
+        <div class="detail-label" style="margin-bottom:5px;">Confirmation Number / Record Locator</div>
+        <input id="editConfNum" type="text" value="${b.confirmationNumber || ''}" placeholder="e.g. ABC123" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px; font-family:var(--font-mono); letter-spacing:1px; text-transform:uppercase;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="editCancel">Cancel</button>
+        <button class="btn btn-primary" id="editSave">Save Confirmation #</button>
+      </div>
+    </div>`;
+  root.querySelector('#editCancel').onclick = () => root.remove();
+  root.querySelector('#editSave').onclick = async () => {
+    const val = document.getElementById('editConfNum').value.trim().toUpperCase();
+    if(!val){ toast('Enter a confirmation number or record locator', 'warn'); return; }
+    try {
+      await apiFetch(`/bookings/pending/${b.id}`, { method: 'PATCH', body: JSON.stringify({ confirmationNumber: val }) });
+      b.confirmationNumber = val;
+      await loadPendingPage(currentPage.pending);
+      toast('Confirmation number saved for ' + b.id);
+      renderEmailStep(root, b);
+    } catch(err) {
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+function composeConfirmationEmail(b){
+  const first = b.customer.split(' ')[0];
+  const vendorLine = b.vendor + (b.flightClass ? ' · ' + b.flightClass : '') + (b.roomType ? ' · ' + b.roomType : '');
+  const subject = `Your ${b.vendor} booking to ${b.dest} is confirmed — ${b.confirmationNumber}`;
+  const body = `Hi ${first},\n\nGreat news — your booking is confirmed!\n\nBooking ID: ${b.id}\nConfirmation / Record Locator: ${b.confirmationNumber}\nDestination: ${b.dest}\nTravel Dates: ${b.dates}\n${vendorLine}\n\nThank you for booking with TripWiz. Safe travels!\n\n— TripWiz Travel Team`;
+  return { subject, body };
+}
+
+function renderEmailStep(root, b){
+  const email = composeConfirmationEmail(b);
+  root.innerHTML = `
+    <div class="modal-box" style="width:460px;">
+      <div class="modal-icon" style="background:var(--green-dim); color:var(--green);"><svg class="icon"><use href="#i-check"/></svg></div>
+      <h3>Booking Confirmed — ${b.id}</h3>
+      <p>Confirmation ${b.confirmationNumber} saved. Build and send the confirmation email to ${b.customer}.</p>
+      <div style="margin-bottom:12px;">
+        <div class="detail-label" style="margin-bottom:5px;">To</div>
+        <div class="detail-value cell-mono" style="background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px;">${b.email}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="detail-label" style="margin-bottom:5px;">Subject</div>
+        <input id="emailSubject" type="text" value="${email.subject.replace(/"/g,'&quot;')}" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <div class="detail-label" style="margin-bottom:5px;">Message</div>
+        <textarea id="emailBody" rows="7" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:12.5px; font-family:var(--font-body); line-height:1.5; resize:vertical;">${email.body}</textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="emailClose">Close</button>
+        <button class="btn btn-primary" id="emailSend">Send Email</button>
+      </div>
+    </div>`;
+  root.querySelector('#emailClose').onclick = () => root.remove();
+  root.querySelector('#emailSend').onclick = async () => {
+    try {
+      await apiFetch(`/bookings/pending/${b.id}`, { method: 'PATCH', body: JSON.stringify({ emailSent: true }) });
+      await loadPendingPage(currentPage.pending);
+      root.remove();
+      toast('Confirmation email sent to ' + b.email);
+    } catch(err) {
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+function showEmailModal(id){
+  const b = pendingData.find(x => x.id === id);
+  if(!b) return;
+  if(!b.confirmationNumber){ toast('Add a confirmation number first via Edit Booking', 'warn'); return; }
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  document.body.appendChild(root);
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  renderEmailStep(root, b);
+}
+
+function showBookingDetail(id){
+  const b = pendingData.find(x=>x.id===id);
+  if(!b) return;
+  const parts = b.customer.split(' ');
+  const firstName = parts[0];
+  const lastName = parts.slice(1).join(' ');
+
+  const passportBlock = b.isIntl ? `
+      <div class="detail-section-title"><svg class="icon" style="width:12px;height:12px"><use href="#i-lock"/></svg> Passport Information</div>
+      <div class="detail-grid">
+        <div><span class="detail-label">Passport Number</span><span class="detail-value cell-mono">${b.passportNumber}</span></div>
+        <div><span class="detail-label">Nationality</span><span class="detail-value">${b.nationality}</span></div>
+        <div><span class="detail-label">Issued</span><span class="detail-value cell-mono">${b.passportIssued}</span></div>
+        <div><span class="detail-label">Expires</span><span class="detail-value cell-mono">${b.passportExpiry}</span></div>
+      </div>` : `
+      <div class="detail-section-title">Domestic Trip</div>
+      <div class="detail-grid"><div style="grid-column:1/-1;"><span class="detail-value" style="color:var(--text-dim); white-space:normal;">Domestic U.S. travel — no passport required.</span></div></div>`;
+
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:500px;">
+      <div class="detail-header">
+        <div class="cust-avatar">${initials(b.customer)}</div>
+        <div>
+          <b>${b.customer}</b>
+          <span>${b.id} · ${b.vendor}</span>
+        </div>
+      </div>
+
+      <div class="agency-code-strip">
+        <div>
+          <div class="detail-label">Travel Agency Booking Code</div>
+          <div class="agency-code-value">${b.agencyCode}</div>
+        </div>
+        <button class="btn btn-sm btn-ghost" onclick="navigator.clipboard && navigator.clipboard.writeText('${b.agencyCode}'); toast('Agency booking code copied')">Copy</button>
+      </div>
+
+      <div class="detail-section-title">Traveler</div>
+      <div class="detail-grid">
+        <div><span class="detail-label">First Name</span><span class="detail-value">${firstName}</span></div>
+        <div><span class="detail-label">Last Name</span><span class="detail-value">${lastName}</span></div>
+        <div><span class="detail-label">Date of Birth</span><span class="detail-value cell-mono">${b.dob}</span></div>
+        <div><span class="detail-label">Email</span><span class="detail-value cell-mono">${b.email}</span></div>
+        <div style="grid-column:1/-1;"><span class="detail-label">Phone Number</span><span class="detail-value cell-mono">${b.phone}</span></div>
+      </div>
+
+      <div class="detail-section-title">${b.roomType ? 'Stay' : 'Flight'}</div>
+      <div class="detail-grid">
+        <div><span class="detail-label">Travel Dates</span><span class="detail-value cell-mono">${b.dates}</span></div>
+        <div><span class="detail-label">Airline / Hotel</span><span class="detail-value">${b.vendor}</span></div>
+        <div><span class="detail-label">Origin</span><span class="detail-value">${b.originCity} (${b.originCode})</span></div>
+        <div><span class="detail-label">Destination</span><span class="detail-value">${b.dest} (${b.destCode})</span></div>
+        ${b.flightClass ? `<div style="grid-column:1/-1;"><span class="detail-label">Class</span><span class="detail-value">${b.flightClass}</span></div>` : ''}
+        ${b.roomType ? `<div style="grid-column:1/-1;"><span class="detail-label">Room Type</span><span class="detail-value">${b.roomType}</span></div>` : ''}
+      </div>
+
+      ${b.flightNumber ? `
+      <div class="detail-section-title">Flight Schedule</div>
+      <div class="flight-strip">
+        <div class="flight-strip-point">
+          <div class="flight-strip-time">${b.depTime}</div>
+          <div class="flight-strip-tz">${b.depTz}</div>
+          <div class="flight-strip-code">${b.originCode}</div>
+          <div class="flight-strip-date">${b.depDate}</div>
+        </div>
+        <div class="flight-strip-mid">
+          <div class="flight-strip-num">${b.flightNumber}</div>
+          <div class="flight-strip-line"><svg class="icon" style="width:14px;height:14px;color:var(--orange-2)"><use href="#i-plane"/></svg></div>
+          <div class="flight-strip-dur">${b.flightDuration} · ${b.flightStops}</div>
+        </div>
+        <div class="flight-strip-point" style="text-align:right;">
+          <div class="flight-strip-time">${b.arrTime}</div>
+          <div class="flight-strip-tz">${b.arrTz}</div>
+          <div class="flight-strip-code">${b.destCode}</div>
+          <div class="flight-strip-date">${b.arrDate}</div>
+        </div>
+      </div>` : ''}
+
+      ${b.passengers.length>1 ? `
+      <div class="detail-section-title">Passengers (${b.passengers.length})</div>
+      <div class="detail-grid"><div style="grid-column:1/-1; display:flex; flex-direction:column; gap:6px;">${b.passengers.map((p,i)=>`<span class="detail-value pax-hover" style="white-space:normal; cursor:pointer; width:fit-content;" onmouseenter="showPaxTip(this,'${p.name.replace(/'/g,"\\'")}','${p.gender}','${p.dob}')" onmouseleave="hidePaxTip()">${i+1}. ${p.name}${i===0?' <span style=\"color:var(--text-faint); font-size:10.5px;\">(primary)</span>':''}</span>`).join('')}</div></div>` : ''}
+
+      ${passportBlock}
+
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="detailClose">Close</button>
+        <button class="btn btn-primary" id="detailVCC">Generate VCC</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#detailClose').onclick = ()=>root.remove();
+  root.addEventListener('click', e=>{ if(e.target===root) root.remove(); });
+  root.querySelector('#detailVCC').onclick = ()=>{ root.remove(); showVCCModal(b.id, b.amount, b.vendor); };
+}
+
+function showModal(kind, id){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  let title, body, confirmLabel, confirmStyle, iconRef, msg;
+  if(kind==='cancel'){ title='Cancel booking '+id+'?'; body='This will cancel the booking and notify the customer. This action cannot be undone.'; confirmLabel='Cancel Booking'; confirmStyle='background:var(--red); border-color:transparent; color:#fff;'; iconRef='i-x-circle'; msg=id+' cancelled'; }
+  else if(kind==='fraud'){ title='Mark '+id+' as confirmed fraud?'; body='This booking will be blocked, funds held, and the case escalated to the fraud team.'; confirmLabel='Confirm Fraud'; confirmStyle='background:var(--red); border-color:transparent; color:#fff;'; iconRef='i-shield'; msg=id+' marked as confirmed fraud'; }
+  else { title='Booking '+id; body='Full itinerary, payment history, and customer details for this booking would appear here.'; confirmLabel='Close'; confirmStyle=''; iconRef='i-eye'; msg=''; }
+
+  root.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-icon"><svg class="icon"><use href="#${iconRef}"/></svg></div>
+      <h3>${title}</h3>
+      <p>${body}</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modalCancel">Go back</button>
+        <button class="btn" style="${confirmStyle}" id="modalConfirm">${confirmLabel}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#modalCancel').onclick = ()=>root.remove();
+  root.addEventListener('click', e=>{ if(e.target===root) root.remove(); });
+  root.querySelector('#modalConfirm').onclick = async ()=>{
+    if(kind === 'cancel'){
+      try {
+        await apiFetch(`/bookings/pending/${id}`, { method: 'DELETE' });
+        await loadPendingPage(currentPage.pending);
+        root.remove();
+        toast(msg, 'danger');
+      } catch(err) {
+        root.remove();
+        toast(err.message, 'danger');
+      }
+      return;
+    }
+    root.remove();
+    if(msg) toast(msg, kind==='view'?'success':'danger');
+  };
+}
+
+/* ============================================================
+   GENERIC DROPDOWN MENU (filters, notifications, profile, date range)
+============================================================ */
+function closeMenus(){ document.querySelectorAll('.dropdown-menu').forEach(m=>m.remove()); }
+
+/* ============================================================
+   BILLING DETAILS HOVER TOOLTIP (customer name)
+============================================================ */
+function showBillingTip(el, id, source){
+  const arr = source === 'fraud' ? fraudData : source === 'completed' ? completedData : pendingData;
+  const b = arr.find(x => x.id === id);
+  if(!b || !b.billingAddress) return;
+  hideBillingTip();
+  const rect = el.getBoundingClientRect();
+  const tip = document.createElement('div');
+  tip.id = 'billingTip';
+  tip.className = 'billing-tip';
+  const left = Math.min(rect.left, window.innerWidth - 260);
+  tip.style.cssText = `position:fixed; top:${rect.bottom+8}px; left:${left}px; z-index:250; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:11px; padding:13px 15px; min-width:220px; max-width:260px; box-shadow:0 20px 40px -12px rgba(0,0,0,.6);`;
+  tip.innerHTML = `
+    <div style="font-family:var(--font-display); font-size:10.5px; color:var(--orange-2); text-transform:uppercase; letter-spacing:.6px; margin-bottom:9px;">Billing Details</div>
+    <div style="font-size:12px; color:var(--text-dim); line-height:1.5; margin-bottom:10px;">${b.billingAddress}<br/>${b.billingCity}, ${b.billingState} ${b.billingZip}</div>
+    <div style="display:flex; align-items:center; gap:8px; padding-top:10px; border-top:1px solid var(--border);">
+      <svg class="icon" style="width:15px;height:15px;color:var(--text-dim)"><use href="#i-card"/></svg>
+      <span style="font-family:var(--font-mono); font-size:12px; color:var(--text);">${b.cardType} •• ${b.cardLast4}</span>
+    </div>`;
+  document.body.appendChild(tip);
+}
+function hideBillingTip(){
+  const t = document.getElementById('billingTip');
+  if(t) t.remove();
+}
+
+/* ============================================================
+   PASSENGER HOVER TOOLTIP (gender + date of birth)
+============================================================ */
+function showPaxTip(el, name, gender, dob){
+  hidePaxTip();
+  const rect = el.getBoundingClientRect();
+  const tip = document.createElement('div');
+  tip.id = 'paxTip';
+  tip.className = 'billing-tip';
+  const left = Math.min(rect.left, window.innerWidth - 220);
+  tip.style.cssText = `position:fixed; top:${rect.bottom+6}px; left:${left}px; z-index:260; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:10px; padding:11px 13px; min-width:170px; box-shadow:0 20px 40px -12px rgba(0,0,0,.6);`;
+  tip.innerHTML = `
+    <div style="font-size:11.5px; font-weight:600; margin-bottom:7px;">${name}</div>
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <div style="display:flex; justify-content:space-between; gap:12px;"><span class="detail-label">Gender</span><span style="font-size:12px; color:var(--text);">${gender}</span></div>
+      <div style="display:flex; justify-content:space-between; gap:12px;"><span class="detail-label">Date of Birth</span><span style="font-size:12px; font-family:var(--font-mono); color:var(--text);">${dob}</span></div>
+    </div>`;
+  document.body.appendChild(tip);
+}
+function hidePaxTip(){
+  const t = document.getElementById('paxTip');
+  if(t) t.remove();
+}
+
+function menu(el, items){
+  event && event.stopPropagation();
+  closeMenus();
+  const rect = el.getBoundingClientRect();
+  const m = document.createElement('div');
+  m.className = 'dropdown-menu';
+  const left = Math.min(rect.left, window.innerWidth - 240);
+  m.style.cssText = `position:fixed; top:${rect.bottom+6}px; left:${left}px; min-width:${Math.max(rect.width,190)}px; max-width:260px; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:10px; padding:6px; box-shadow:0 20px 40px -12px rgba(0,0,0,0.6); z-index:300;`;
+  m.innerHTML = items.map(it=>`<div class="dropdown-item" style="padding:8px 10px;border-radius:7px;font-size:12.5px;color:${it.danger?'var(--red)':'var(--text)'};">${it.label}</div>`).join('');
+  document.body.appendChild(m);
+  [...m.children].forEach((row,i)=>{
+    row.addEventListener('mouseenter', ()=>row.style.background='var(--surface-hover)');
+    row.addEventListener('mouseleave', ()=>row.style.background='transparent');
+    row.addEventListener('click', ev=>{
+      ev.stopPropagation();
+      if(items[i].label === 'Sign out'){ closeMenus(); logout(); return; }
+      toast(items[i].label, items[i].danger ? 'danger' : 'success');
+      closeMenus();
+    });
+  });
+  setTimeout(()=>{ document.addEventListener('click', function outsideClose(ev){ if(!m.contains(ev.target)){ m.remove(); } document.removeEventListener('click', outsideClose); }); }, 0);
+}
+
+/* ============================================================
+   SORTABLE TABLE HEADERS
+============================================================ */
+function sortToggle(th){
+  const table = th.closest('table');
+  table.querySelectorAll('th.sortable').forEach(t=>{ if(t!==th){ t.classList.remove('sort-asc','sort-desc'); } });
+  if(th.classList.contains('sort-asc')){ th.classList.remove('sort-asc'); th.classList.add('sort-desc'); }
+  else if(th.classList.contains('sort-desc')){ th.classList.remove('sort-desc'); }
+  else { th.classList.add('sort-asc'); }
+  const label = th.textContent.trim();
+  const dir = th.classList.contains('sort-asc') ? 'ascending' : th.classList.contains('sort-desc') ? 'descending' : null;
+  toast(dir ? `Sorted by ${label} (${dir})` : `Sort cleared on ${label}`);
+}
+
+/* ============================================================
+   PAGINATION
+============================================================ */
+
+/* ============================================================
+   REVENUE CHART RANGE TABS
+============================================================ */
+function genLabels(n){
+  const arr=[]; const base=new Date(2026,6,18);
+  for(let i=n-1;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); arr.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'})); }
+  return arr;
+}
+function genSeries(n, start, variance){
+  const arr=[]; let v=start;
+  for(let i=0;i<n;i++){ v += (Math.random()-0.42)*variance; v=Math.max(v, start*0.35); arr.push(Math.round(v)); }
+  return arr;
+}
+function tabPillClick(el, range){
+  el.parentElement.querySelectorAll('.tab-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderRevenueChart(range);
+  toast('Revenue chart updated to '+range+' view');
+}
+
+/* ============================================================
+   BULK ACTIONS (Pending Bookings)
+============================================================ */
+async function bulkAction(kind){
+  const checked = [...document.querySelectorAll('.pending-row-check:checked')];
+  const n = checked.length;
+  if(n===0){ toast('Select at least one booking first', 'warn'); return; }
+  if(kind==='approve'){
+    toast(n+' booking'+(n>1?'s':'')+' approved', 'success');
+  } else {
+    const ids = checked.map(cb => cb.dataset.id);
+    await Promise.all(ids.map(id => flagBookingForFraud(id)));
+    toast(n+' booking'+(n>1?'s':'')+' moved to Fraud Review', 'danger');
+  }
+  clearBulk('pending');
+}
+</script>
+</body>
+</html>
