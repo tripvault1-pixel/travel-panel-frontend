@@ -606,45 +606,45 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
         </div>
 
         <div class="kpi-grid">
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Total Bookings: 2,481 across all channels this month')">
-            <div class="kpi-top"><div class="kpi-icon"><svg class="icon"><use href="#i-plane"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>12.4%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Total Bookings across pending, completed, and fraud queues')">
+            <div class="kpi-top"><div class="kpi-icon"><svg class="icon"><use href="#i-plane"/></svg></div></div>
             <div class="kpi-label">Total Bookings</div>
-            <div class="kpi-value">2,481</div>
+            <div class="kpi-value" id="kpiTotalBookings">2,481</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Revenue Today: $48,290 from 68 bookings')">
-            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>8.1%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Revenue from bookings completed today')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div></div>
             <div class="kpi-label">Revenue Today</div>
-            <div class="kpi-value">$48,290</div>
+            <div class="kpi-value" id="kpiRevenueToday">$48,290</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Revenue This Month: $612,140, up 21.7% vs last month')">
-            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>21.7%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Revenue from bookings completed this month')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon" style="width:16px;height:16px"><use href="#i-arrow-up"/></svg></div></div>
             <div class="kpi-label">Revenue This Month</div>
-            <div class="kpi-value">$612,140</div>
+            <div class="kpi-value" id="kpiRevenueMonth">$612,140</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('24 bookings awaiting confirmation or payment')">
-            <div class="kpi-top"><div class="kpi-icon amber"><svg class="icon"><use href="#i-clock"/></svg></div><div class="kpi-trend down"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-down"/></svg>3.2%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Bookings awaiting confirmation or payment')">
+            <div class="kpi-top"><div class="kpi-icon amber"><svg class="icon"><use href="#i-clock"/></svg></div></div>
             <div class="kpi-label">Pending Bookings</div>
-            <div class="kpi-value">24</div>
+            <div class="kpi-value" id="kpiPendingCount">24</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('2,109 bookings completed this period')">
-            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon"><use href="#i-check"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>9.6%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Bookings completed this period')">
+            <div class="kpi-top"><div class="kpi-icon green"><svg class="icon"><use href="#i-check"/></svg></div></div>
             <div class="kpi-label">Completed Bookings</div>
-            <div class="kpi-value">2,109</div>
+            <div class="kpi-value" id="kpiCompletedCount">2,109</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('58 bookings cancelled this period')">
-            <div class="kpi-top"><div class="kpi-icon red"><svg class="icon"><use href="#i-x-circle"/></svg></div><div class="kpi-trend down"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-down"/></svg>1.4%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Bookings cancelled all-time')">
+            <div class="kpi-top"><div class="kpi-icon red"><svg class="icon"><use href="#i-x-circle"/></svg></div></div>
             <div class="kpi-label">Cancelled Bookings</div>
-            <div class="kpi-value">58</div>
+            <div class="kpi-value" id="kpiCancelledCount">58</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('5 active fraud alerts need review')">
-            <div class="kpi-top"><div class="kpi-icon red"><svg class="icon"><use href="#i-shield"/></svg></div><div class="kpi-trend up" style="color:var(--red); background:var(--red-dim)"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>2</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Active fraud alerts needing review')">
+            <div class="kpi-top"><div class="kpi-icon red"><svg class="icon"><use href="#i-shield"/></svg></div></div>
             <div class="kpi-label">Fraud Alerts</div>
-            <div class="kpi-value">5</div>
+            <div class="kpi-value" id="kpiFraudCount">5</div>
           </div>
-          <div class="kpi-card" style="cursor:pointer;" onclick="toast('34.2% of quotes converted to bookings')">
-            <div class="kpi-top"><div class="kpi-icon blue"><svg class="icon"><use href="#i-user-check"/></svg></div><div class="kpi-trend up"><svg class="icon" style="width:11px;height:11px"><use href="#i-arrow-up"/></svg>0.8%</div></div>
+          <div class="kpi-card" style="cursor:pointer;" onclick="toast('Share of tracked bookings that reached Completed')">
+            <div class="kpi-top"><div class="kpi-icon blue"><svg class="icon"><use href="#i-user-check"/></svg></div></div>
             <div class="kpi-label">Conversion Rate</div>
-            <div class="kpi-value">34.2<span class="unit">%</span></div>
+            <div class="kpi-value" id="kpiConversionRate">34.2<span class="unit">%</span></div>
           </div>
         </div>
 
@@ -652,9 +652,10 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
           <div class="kpi-card" style="max-width:280px;">
             <div class="kpi-top"><div class="kpi-icon"><svg class="icon"><use href="#i-doc"/></svg></div></div>
             <div class="kpi-label">Average Booking Value</div>
-            <div class="kpi-value">$2,187</div>
+            <div class="kpi-value" id="kpiAvgBookingValue">$2,187</div>
           </div>
         </div>
+
 
         <div class="grid-2">
           <div class="panel">
@@ -865,11 +866,11 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
         </div>
 
         <div class="risk-summary-grid">
-          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 2 high-risk bookings')"><div class="dot" style="background:var(--red)"></div><div class="val">2</div><div class="lbl">High-Risk Bookings</div></div>
-          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 3 medium-risk bookings')"><div class="dot" style="background:var(--amber)"></div><div class="val">3</div><div class="lbl">Medium-Risk Bookings</div></div>
-          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 9 low-risk bookings')"><div class="dot" style="background:var(--green)"></div><div class="val">9</div><div class="lbl">Low-Risk Bookings</div></div>
-          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 4 bookings under review')"><div class="dot" style="background:var(--blue)"></div><div class="val">4</div><div class="lbl">Under Review</div></div>
-          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to 1 confirmed fraud case')"><div class="dot" style="background:#8B5CF6"></div><div class="val">1</div><div class="lbl">Confirmed Fraud</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to high-risk bookings')"><div class="dot" style="background:var(--red)"></div><div class="val" id="riskHighCount">2</div><div class="lbl">High-Risk Bookings</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to medium-risk bookings')"><div class="dot" style="background:var(--amber)"></div><div class="val" id="riskMediumCount">3</div><div class="lbl">Medium-Risk Bookings</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to low-risk bookings')"><div class="dot" style="background:var(--green)"></div><div class="val" id="riskLowCount">9</div><div class="lbl">Low-Risk Bookings</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to bookings under review')"><div class="dot" style="background:var(--blue)"></div><div class="val">4</div><div class="lbl">Under Review</div></div>
+          <div class="risk-sum-card" style="cursor:pointer;" onclick="toast('Filtering to confirmed fraud cases')"><div class="dot" style="background:#8B5CF6"></div><div class="val" id="riskConfirmedCount">1</div><div class="lbl">Confirmed Fraud</div></div>
         </div>
 
         <div class="grid-3">
@@ -1074,7 +1075,8 @@ function renderLoginScreen(ip){
           <label>Password</label>
           <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password">
         </div>
-        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:14px;" id="authSubmit">Sign In</button>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:10px;" id="authSubmit">Sign In</button>
+        <div style="text-align:center; margin-bottom:14px;"><a href="#" id="forgotLink" style="font-size:11.5px; color:var(--orange-2);">Forgot password?</a></div>
         <div style="font-size:10.5px; color:var(--text-faint);">IP verified: <span class="cell-mono">${ip || 'unknown'}</span> · Accounts are created by an admin</div>
       </div>
     </div>`;
@@ -1082,6 +1084,67 @@ function renderLoginScreen(ip){
   document.getElementById('authSubmit').onclick = submit;
   document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') submit(); });
   document.getElementById('authEmail').addEventListener('keydown', e => { if(e.key === 'Enter') submit(); });
+  document.getElementById('forgotLink').onclick = (e) => { e.preventDefault(); renderForgotPasswordScreen(ip); };
+}
+
+function renderForgotPasswordScreen(ip){
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><div class="brand-mark">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b><span style="font-size:11px; color:var(--text-faint);">Reset your password</span></div>
+        <div class="auth-error" id="fpError"></div>
+        <div id="fpSuccess" style="display:none; font-size:12.5px; color:var(--green); background:var(--green-dim); border-radius:8px; padding:10px 12px; margin-bottom:14px; text-align:left;">If that email has an account, a reset link has been sent. Check your inbox.</div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input id="fpEmail" type="email" placeholder="you@tripwiz.com" autocomplete="username">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:10px;" id="fpSubmit">Send Reset Link</button>
+        <div style="text-align:center;"><a href="#" id="backToLogin" style="font-size:11.5px; color:var(--text-faint);">← Back to sign in</a></div>
+      </div>
+    </div>`;
+  document.getElementById('backToLogin').onclick = (e) => { e.preventDefault(); renderLoginScreen(ip); };
+  document.getElementById('fpSubmit').onclick = async () => {
+    const email = document.getElementById('fpEmail').value.trim();
+    const errEl = document.getElementById('fpError');
+    const okEl = document.getElementById('fpSuccess');
+    errEl.classList.remove('show');
+    if(!email){ errEl.textContent = 'Enter your email address.'; errEl.classList.add('show'); return; }
+    try {
+      await apiFetch('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+      okEl.style.display = 'block';
+    } catch(err) {
+      errEl.textContent = err.message; errEl.classList.add('show');
+    }
+  };
+}
+
+function renderResetPasswordScreen(token){
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card">
+        <div class="auth-brand"><div class="brand-mark">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b><span style="font-size:11px; color:var(--text-faint);">Set a new password</span></div>
+        <div class="auth-error" id="rpError"></div>
+        <div class="auth-field">
+          <label>New Password (min 8 characters)</label>
+          <input id="rpNew" type="password" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" id="rpSubmit">Set New Password</button>
+      </div>
+    </div>`;
+  document.getElementById('rpSubmit').onclick = async () => {
+    const newPassword = document.getElementById('rpNew').value;
+    const errEl = document.getElementById('rpError');
+    errEl.classList.remove('show');
+    if(!newPassword || newPassword.length < 8){ errEl.textContent = 'Password must be at least 8 characters.'; errEl.classList.add('show'); return; }
+    try {
+      await apiFetch('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) });
+      toast('Password updated — sign in with your new password');
+      history.replaceState(null, '', window.location.pathname);
+      renderLoginScreen(detectedIP);
+    } catch(err) {
+      errEl.textContent = err.message; errEl.classList.add('show');
+    }
+  };
 }
 
 async function attemptLogin(){
@@ -1114,6 +1177,51 @@ function logout(){
   renderLoginScreen(detectedIP);
 }
 
+function showChangePasswordModal(){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:400px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-lock"/></svg></div>
+      <h3>Change Password</h3>
+      <p>${currentUser ? currentUser.email : ''}</p>
+      <div class="auth-error" id="cpError" style="text-align:left;"></div>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">Current Password</div>
+          <input id="cpCurrent" type="password" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+        </div>
+        <div>
+          <div class="detail-label" style="margin-bottom:5px;">New Password (min 8 characters)</div>
+          <input id="cpNew" type="password" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="cpCancel">Cancel</button>
+        <button class="btn btn-primary" id="cpSave">Update Password</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#cpCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#cpSave').onclick = async () => {
+    const currentPassword = document.getElementById('cpCurrent').value;
+    const newPassword = document.getElementById('cpNew').value;
+    const errEl = document.getElementById('cpError');
+    errEl.classList.remove('show');
+    if(!currentPassword || !newPassword){
+      errEl.textContent = 'Both fields are required.'; errEl.classList.add('show'); return;
+    }
+    try {
+      await apiFetch('/auth/password', { method: 'PATCH', body: JSON.stringify({ currentPassword, newPassword }) });
+      root.remove();
+      toast('Password updated');
+    } catch(err) {
+      errEl.textContent = err.message; errEl.classList.add('show');
+    }
+  };
+}
+
 function updateProfileUI(user){
   const name = user.email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ') || user.email;
   const initials = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -1137,6 +1245,7 @@ async function bootstrapApp(){
       loadPendingPage(1),
       loadCompletedPage(1),
       loadFraudPage(1),
+      loadDashboardStats(),
     ]);
     if(currentUser.role === 'Admin'){
       await Promise.all([loadUsers(), loadWhitelist()]);
@@ -1146,7 +1255,137 @@ async function bootstrapApp(){
   }
 }
 
+async function loadDashboardStats(){
+  try {
+    const s = await apiFetch('/stats/dashboard');
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('kpiTotalBookings', s.totalBookings.toLocaleString());
+    set('kpiPendingCount', s.pendingCount.toLocaleString());
+    set('kpiCompletedCount', s.completedCount.toLocaleString());
+    set('kpiFraudCount', s.fraudCount.toLocaleString());
+    set('kpiAvgBookingValue', '$' + s.avgBookingValue.toLocaleString());
+    set('kpiRevenueToday', '$' + s.revenueToday.toLocaleString());
+    set('kpiRevenueMonth', '$' + s.revenueMonth.toLocaleString());
+    set('kpiCancelledCount', s.cancelledCount.toLocaleString());
+    const convEl = document.getElementById('kpiConversionRate');
+    if(convEl) convEl.innerHTML = s.conversionRate + '<span class="unit">%</span>';
+    set('riskHighCount', s.fraudByStatus.high || 0);
+    set('riskMediumCount', s.fraudByStatus.medium || 0);
+    set('riskLowCount', s.fraudByStatus.low || 0);
+    set('riskConfirmedCount', s.fraudByStatus.confirmed || 0);
+  } catch(err) {
+    console.warn('Failed to load dashboard stats:', err.message);
+  }
+
+  try {
+    const rev = await apiFetch('/stats/revenue-timeseries?days=14');
+    if(typeof drawLineChart === 'function') drawLineChart('chartRevenue', rev.labels.map(d=>d.slice(5)), rev.data, { color: cOrange });
+  } catch(err) { console.warn('revenue chart:', err.message); }
+
+  try {
+    const bbd = await apiFetch('/stats/bookings-by-day?days=7');
+    if(typeof drawBarChart === 'function') drawBarChart('chartBookings', bbd.labels.map(d=>d.slice(5)), bbd.data, cOrange2);
+  } catch(err) { console.warn('bookings chart:', err.message); }
+
+  try {
+    const ft = await apiFetch('/stats/fraud-timeseries?days=14');
+    if(typeof drawLineChart === 'function') drawLineChart('chartFraudTrend', null, ft.data, { color: cRed, grid: false, labels: false });
+  } catch(err) { console.warn('fraud trend chart:', err.message); }
+
+  try {
+    const feed = await apiFetch('/stats/activity-feed?limit=6');
+    renderActivityFeed(feed.activity);
+  } catch(err) { console.warn('activity feed:', err.message); }
+
+  try {
+    const dests = await apiFetch('/stats/top-destinations');
+    renderTopDestinations(dests.destinations);
+  } catch(err) { console.warn('top destinations:', err.message); }
+
+  try {
+    const vendors = await apiFetch('/stats/top-vendors');
+    renderTopVendors(vendors.vendors);
+  } catch(err) { console.warn('top vendors:', err.message); }
+}
+
+const ACTIVITY_ICON = { created: 'i-plane', cancelled: 'i-x-circle', flagged: 'i-alert', completed: 'i-check', email_sent: 'i-mail' };
+const ACTIVITY_COLOR = { created: 'blue', cancelled: 'red', flagged: 'red', completed: 'green', email_sent: 'green' };
+const ACTIVITY_VERB = { created: 'created', cancelled: 'cancelled', flagged: 'flagged for fraud review', completed: 'marked complete', email_sent: 'confirmation email sent' };
+
+function timeAgo(isoString){
+  const diffMs = Date.now() - new Date(isoString + 'Z').getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + ' minute' + (mins===1?'':'s') + ' ago';
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return hrs + ' hour' + (hrs===1?'':'s') + ' ago';
+  const days = Math.floor(hrs / 24);
+  return days + ' day' + (days===1?'':'s') + ' ago';
+}
+
+function renderActivityFeed(rows){
+  const el = document.getElementById('activityFeed');
+  if(!el) return;
+  if(!rows || rows.length === 0){
+    el.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><b>No activity yet</b><div>Actions like new bookings and cancellations will show up here.</div></div>`;
+    return;
+  }
+  el.innerHTML = rows.map(a => {
+    const icon = ACTIVITY_ICON[a.type] || 'i-doc';
+    const color = ACTIVITY_COLOR[a.type] || 'blue';
+    const verb = ACTIVITY_VERB[a.type] || a.type;
+    return `
+    <div class="activity-row" style="cursor:pointer;" onclick="toast('${(a.detail||'').replace(/'/g,"\\'")}')">
+      <div class="activity-dot" style="background:var(--${color}-dim); color:var(--${color});"><svg class="icon" style="width:15px;height:15px"><use href="#${icon}"/></svg></div>
+      <div class="activity-body"><p><b>${a.booking_id || ''}</b> ${verb}${a.customer ? ' — ' + a.customer : ''}</p><div class="activity-time">${timeAgo(a.created_at)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTopDestinations(rows){
+  const el = document.getElementById('topDestinations');
+  if(!el) return;
+  if(!rows || rows.length === 0){
+    el.innerHTML = `<div class="empty-state" style="padding:20px 10px;"><b>No bookings yet</b></div>`;
+    return;
+  }
+  const max = Math.max(...rows.map(r => r.n));
+  el.innerHTML = rows.map((r,i) => `
+    <div class="rank-row" style="cursor:pointer;" onclick="toast('${r.dest.replace(/'/g,"\\'")}: ${r.n} booking${r.n===1?'':'s'}, \\$${r.revenue.toLocaleString()}')">
+      <span class="rank-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="rank-flag">🌍</div>
+      <div class="rank-meta">
+        <b>${r.dest}</b>
+        <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.round((r.n/max)*100)}%"></div></div>
+      </div>
+      <span class="rank-value">${r.n} booking${r.n===1?'':'s'}</span>
+    </div>`).join('');
+}
+
+function renderTopVendors(rows){
+  const el = document.getElementById('topVendors');
+  if(!el) return;
+  if(!rows || rows.length === 0){
+    el.innerHTML = `<div class="empty-state" style="padding:20px 10px;"><b>No bookings yet</b></div>`;
+    return;
+  }
+  const max = Math.max(...rows.map(r => r.n));
+  el.innerHTML = rows.map((r,i) => `
+    <div class="rank-row" style="cursor:pointer;" onclick="toast('${r.vendor.replace(/'/g,"\\'")}: ${r.n} booking${r.n===1?'':'s'}')">
+      <span class="rank-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="rank-flag">✈️</div>
+      <div class="rank-meta">
+        <b>${r.vendor}</b>
+        <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.round((r.n/max)*100)}%"></div></div>
+      </div>
+      <span class="rank-value">${r.n} booking${r.n===1?'':'s'}</span>
+    </div>`).join('');
+}
+
 async function initAuthGate(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetToken = urlParams.get('reset');
+
   renderCheckingScreen();
   let ipRes;
   try {
@@ -1165,6 +1404,12 @@ async function initAuthGate(){
     renderDeniedScreen(detectedIP);
     return;
   }
+
+  if(resetToken){
+    renderResetPasswordScreen(resetToken);
+    return;
+  }
+
   renderLoginScreen(detectedIP);
 }
 
@@ -1567,6 +1812,7 @@ function pendingRowHTML(b, idx){
         <div class="action-icon" title="Open ${b.vendor} website" onclick="openVendorSite('${b.vendor.replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-external"/></svg></div>
         <div class="action-icon" title="Edit booking" onclick="showEditBookingModal('${b.id}')"><svg class="icon"><use href="#i-edit"/></svg></div>
         ${b.confirmationNumber ? `<div class="action-icon ${b.emailSent?'good':'warn'}" title="${b.emailSent?'Resend confirmation email':'Build/Send confirmation email'}" onclick="showEmailModal('${b.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>` : ''}
+        ${b.confirmationNumber ? `<div class="action-icon good" title="Mark booking complete" onclick="showMarkCompleteModal('${b.id}')"><svg class="icon"><use href="#i-check"/></svg></div>` : ''}
         <div class="action-icon warn" title="Flag for fraud review" onclick="showFlagFraudModal('${b.id}')"><svg class="icon"><use href="#i-flag"/></svg></div>
         <div class="action-icon danger" title="Cancel booking" onclick="showModal('cancel','${b.id}')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
       </div>
@@ -2079,6 +2325,16 @@ function showNewBookingModal(){
             <input id="nbVendor" type="text" placeholder="e.g. Delta Air Lines" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
           </div>
           <div style="width:120px;">
+            <div class="detail-label" style="margin-bottom:5px;">Flight #</div>
+            <input id="nbFlightNumber" type="text" placeholder="e.g. DL167" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px; font-family:var(--font-mono);">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <div class="detail-label" style="margin-bottom:5px;">Customer Email</div>
+            <input id="nbEmail" type="email" placeholder="customer@email.com" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+          </div>
+          <div style="width:120px;">
             <div class="detail-label" style="margin-bottom:5px;">Amount *</div>
             <input id="nbAmount" type="number" placeholder="1200" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
           </div>
@@ -2127,6 +2383,8 @@ function showNewBookingModal(){
     const vendor = document.getElementById('nbVendor').value.trim() || 'TBD';
     const source = document.getElementById('nbSource').value;
     const flightClass = document.getElementById('nbClass').value;
+    const flightNumber = document.getElementById('nbFlightNumber').value.trim();
+    const email = document.getElementById('nbEmail').value.trim();
 
     const stateMatch = dest.match(/,\s*([A-Z]{2})$/);
     const isIntl = !(stateMatch && US_STATE_CODES.includes(stateMatch[1]));
@@ -2134,9 +2392,10 @@ function showNewBookingModal(){
     try {
       await apiFetch('/bookings/pending', {
         method: 'POST',
-        body: JSON.stringify({ customer, dest, dates, vendor, amount, source, isIntl, flightClass: flightClass || undefined }),
+        body: JSON.stringify({ customer, dest, dates, vendor, amount, source, isIntl, email: email || undefined, flightClass: flightClass || undefined, flightNumber: flightNumber || undefined }),
       });
       await loadPendingPage(1);
+      loadDashboardStats();
       root.remove();
       toast('Booking created for ' + customer);
     } catch(err) {
@@ -2163,12 +2422,43 @@ async function flagBookingForFraud(id){
       method: 'POST',
       body: JSON.stringify({ ip: randomIP(), device: randomFingerprint() }),
     });
-    await Promise.all([loadPendingPage(1), loadFraudPage(1)]);
+    await Promise.all([loadPendingPage(1), loadFraudPage(1), loadDashboardStats()]);
     return true;
   } catch(err) {
     toast(err.message, 'danger');
     return false;
   }
+}
+
+function showMarkCompleteModal(id){
+  const b = pendingData.find(x => x.id === id);
+  if(!b) return;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-icon" style="background:var(--green-dim); color:var(--green);"><svg class="icon"><use href="#i-check"/></svg></div>
+      <h3>Mark ${b.id} complete?</h3>
+      <p>${b.customer}'s booking to ${b.dest} will move from Pending Bookings into Completed Bookings using confirmation ${b.confirmationNumber}.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="mcCancel">Go back</button>
+        <button class="btn btn-primary" id="mcConfirm">Mark Complete</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#mcCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#mcConfirm').onclick = async () => {
+    try {
+      await apiFetch(`/bookings/pending/${id}/complete`, { method: 'POST' });
+      await Promise.all([loadPendingPage(1), loadCompletedPage(1), loadDashboardStats()]);
+      root.remove();
+      toast(id + ' marked complete');
+    } catch(err) {
+      root.remove();
+      toast(err.message, 'danger');
+    }
+  };
 }
 
 function showFlagFraudModal(id){
@@ -2271,12 +2561,17 @@ function renderEmailStep(root, b){
     </div>`;
   root.querySelector('#emailClose').onclick = () => root.remove();
   root.querySelector('#emailSend').onclick = async () => {
+    const btn = root.querySelector('#emailSend');
+    const subject = document.getElementById('emailSubject').value;
+    const body = document.getElementById('emailBody').value;
+    btn.disabled = true; btn.textContent = 'Sending…';
     try {
-      await apiFetch(`/bookings/pending/${b.id}`, { method: 'PATCH', body: JSON.stringify({ emailSent: true }) });
-      await loadPendingPage(currentPage.pending);
+      await apiFetch(`/bookings/pending/${b.id}/send-email`, { method: 'POST', body: JSON.stringify({ subject, body }) });
+      await Promise.all([loadPendingPage(currentPage.pending), loadDashboardStats()]);
       root.remove();
       toast('Confirmation email sent to ' + b.email);
     } catch(err) {
+      btn.disabled = false; btn.textContent = 'Send Email';
       toast(err.message, 'danger');
     }
   };
@@ -2415,6 +2710,7 @@ function showModal(kind, id){
       try {
         await apiFetch(`/bookings/pending/${id}`, { method: 'DELETE' });
         await loadPendingPage(currentPage.pending);
+        loadDashboardStats();
         root.remove();
         toast(msg, 'danger');
       } catch(err) {
@@ -2501,6 +2797,7 @@ function menu(el, items){
     row.addEventListener('click', ev=>{
       ev.stopPropagation();
       if(items[i].label === 'Sign out'){ closeMenus(); logout(); return; }
+      if(items[i].label === 'Account settings'){ closeMenus(); showChangePasswordModal(); return; }
       toast(items[i].label, items[i].danger ? 'danger' : 'success');
       closeMenus();
     });
