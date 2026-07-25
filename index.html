@@ -557,10 +557,10 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
 
     <div class="nav-group-label">Bookings</div>
     <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count" id="navPendingBadge">24</span></a>
-    <a class="nav-item" data-page="completed"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
+    <a class="nav-item" data-page="completed" id="navCompleted"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
 
     <div class="nav-group-label">Security</div>
-    <a class="nav-item" data-page="fraud"><svg class="icon"><use href="#i-shield"/></svg><span class="label">Fraud Prevention</span><span class="badge-count" id="navFraudBadge" style="background:var(--red-dim); color:var(--red);">5</span></a>
+    <a class="nav-item" data-page="fraud" id="navFraud"><svg class="icon"><use href="#i-shield"/></svg><span class="label">Fraud Prevention</span><span class="badge-count" id="navFraudBadge" style="background:var(--red-dim); color:var(--red);">5</span></a>
     <a class="nav-item" data-page="admin" id="navAdminSettings"><svg class="icon"><use href="#i-lock"/></svg><span class="label">Admin Settings</span></a>
 
     <div class="sidebar-footer">
@@ -827,7 +827,6 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
                   <th>Return</th>
                   <th class="sortable" onclick="sortToggle(this)">Total Paid</th>
                   <th>Payment Method</th>
-                  <th>Agent</th>
                   <th>Confirmation #</th>
                   <th>Completed</th>
                   <th>Status</th>
@@ -1345,20 +1344,34 @@ function updateProfileUI(user){
   if(topbarAvatar) topbarAvatar.textContent = initials;
   const adminNav = document.getElementById('navAdminSettings');
   if(adminNav) adminNav.style.display = user.role === 'Admin' ? '' : 'none';
+
+  const isAgent = user.role === 'Agent';
+  const completedNav = document.getElementById('navCompleted');
+  const fraudNav = document.getElementById('navFraud');
+  if(completedNav) completedNav.style.display = isAgent ? 'none' : '';
+  if(fraudNav) fraudNav.style.display = isAgent ? 'none' : '';
+  if(isAgent){
+    const activePage = document.querySelector('.page.active');
+    if(activePage && (activePage.id === 'page-completed' || activePage.id === 'page-fraud')){
+      document.querySelector('.nav-item[data-page="pending"]').click();
+    }
+  }
 }
 
 // Called once, right after login succeeds — loads real data from the API
 // into the pages that used to rely on in-memory demo arrays.
 async function bootstrapApp(){
+  const isAgent = currentUser.role === 'Agent';
   try {
-    await Promise.all([
+    const tasks = [
       loadPendingPage(1),
-      loadCompletedPage(1),
-      loadFraudPage(1),
       loadDashboardStats(),
-      loadFraudAnalytics(),
       loadProfile(),
-    ]);
+    ];
+    if(!isAgent){
+      tasks.push(loadCompletedPage(1), loadFraudPage(1), loadFraudAnalytics());
+    }
+    await Promise.all(tasks);
     if(currentUser.role === 'Admin'){
       await Promise.all([loadUsers(), loadWhitelist()]);
     }
@@ -2087,13 +2100,12 @@ function completedRowHTML(b){
     <td class="cell-mono">${b.ret}</td>
     <td class="cell-strong">$${(b.paid||0).toLocaleString()}</td>
     <td>${b.method||''}</td>
-    <td>${b.agent||''}</td>
     <td class="cell-mono">${b.conf||''}</td>
     <td class="cell-mono">${b.done||''}</td>
     <td><span class="badge badge-completed">Completed</span></td>
     <td>
       <div class="row-actions">
-        <div class="action-icon" title="View itinerary" onclick="showModal('view','${b.id}')"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon" title="View itinerary" onclick="showCompletedDetail('${b.id}')"><svg class="icon"><use href="#i-eye"/></svg></div>
         <div class="action-icon" title="Download invoice" onclick="rowAction('Invoice downloaded for ${b.id}','success')"><svg class="icon"><use href="#i-download"/></svg></div>
         <div class="action-icon" title="Resend confirmation email" onclick="rowAction('Confirmation resent for ${b.id}','success')"><svg class="icon"><use href="#i-mail"/></svg></div>
         <div class="action-icon" title="More" onclick="rowAction('Options for ${b.id}','success')"><svg class="icon"><use href="#i-more"/></svg></div>
@@ -2835,6 +2847,42 @@ function showEmailModal(id){
   renderEmailStep(root, b);
 }
 
+function showCompletedDetail(id){
+  const b = completedData.find(x => x.id === id);
+  if(!b) return;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:440px;">
+      <div class="detail-header">
+        <div class="cust-avatar">${initials(b.customer)}</div>
+        <div><b>${b.customer}</b><span>${b.id}</span></div>
+      </div>
+      <div class="detail-section-title">Itinerary</div>
+      <div class="detail-grid">
+        <div><span class="detail-label">Destination</span><span class="detail-value">${b.dest || ''}</span></div>
+        <div><span class="detail-label">Status</span><span class="detail-value">Completed</span></div>
+        <div><span class="detail-label">Departure</span><span class="detail-value cell-mono">${b.dep || ''}</span></div>
+        <div><span class="detail-label">Return</span><span class="detail-value cell-mono">${b.ret || ''}</span></div>
+      </div>
+      <div class="detail-section-title">Payment</div>
+      <div class="detail-grid">
+        <div><span class="detail-label">Total Paid</span><span class="detail-value">$${(b.paid||0).toLocaleString()}</span></div>
+        <div><span class="detail-label">Payment Method</span><span class="detail-value cell-mono">${b.method || ''}</span></div>
+        <div><span class="detail-label">Confirmation #</span><span class="detail-value cell-mono">${b.conf || ''}</span></div>
+        <div><span class="detail-label">Completed On</span><span class="detail-value cell-mono">${b.done || ''}</span></div>
+      </div>
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="cdClose">Close</button>
+        <button class="btn btn-primary" id="cdDownload">Download Invoice</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#cdClose').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#cdDownload').onclick = () => { rowAction('Invoice downloaded for ' + b.id, 'success'); };
+}
+
 function showBookingDetail(id){
   const b = pendingData.find(x=>x.id===id);
   if(!b) return;
@@ -3142,7 +3190,7 @@ const EXPORT_COLUMNS = {
   ],
   completed: [
     ['id','Booking ID'], ['customer','Customer'], ['dest','Destination'], ['dep','Departure'],
-    ['ret','Return'], ['paid','Total Paid'], ['method','Payment Method'], ['agent','Agent'],
+    ['ret','Return'], ['paid','Total Paid'], ['method','Payment Method'],
     ['conf','Confirmation #'], ['done','Completed'],
   ],
   fraud: [
