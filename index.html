@@ -989,6 +989,11 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
 ============================================================ */
 const API_BASE = 'https://travel-panel-api-production.up.railway.app/api';
 
+// Set to true to take the entire site down behind a maintenance screen —
+// blocks the login gate and the app completely, for everyone, regardless
+// of role. Flip back to false (and re-upload) to restore normal access.
+const MAINTENANCE_MODE = true;
+
 let currentUser = null;
 let authToken = null;
 let detectedIP = null;
@@ -1884,7 +1889,25 @@ async function addMyIp(){
 
 renderUsersList();
 renderWhitelistList();
-initAuthGate();
+
+function renderMaintenanceScreen(){
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('authGate').innerHTML = `
+    <div class="auth-gate">
+      <div class="auth-card" style="width:420px;">
+        <div class="auth-brand"><div class="brand-mark">TP</div><b style="font-family:var(--font-display); font-size:15px;">Travel Panel</b></div>
+        <div class="modal-icon" style="background:var(--amber-dim); color:var(--amber); margin:6px auto 16px; width:52px; height:52px;"><svg class="icon" style="width:24px;height:24px"><use href="#i-lock"/></svg></div>
+        <h3 style="margin-bottom:8px; font-size:18px;">Maintenance in Progress</h3>
+        <p style="margin-bottom:0;">This portal is temporarily unavailable while we make some updates. Please check back shortly.</p>
+      </div>
+    </div>`;
+}
+
+if(MAINTENANCE_MODE){
+  renderMaintenanceScreen();
+} else {
+  initAuthGate();
+}
 
 /* ============================================================
    NAVIGATION
