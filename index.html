@@ -564,7 +564,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
     <a class="nav-item" data-page="admin" id="navAdminSettings"><svg class="icon"><use href="#i-lock"/></svg><span class="label">Admin Settings</span></a>
 
     <div class="sidebar-footer">
-      <div class="role-pill" id="sidebarProfile" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Switch role'},{label:'Account settings'},{label:'Sign out', danger:true}])">
+      <div class="role-pill" id="sidebarProfile" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Switch role'},{label:'Account settings'},{label:'Sign out', danger:true}])">
         <div class="role-avatar">HF</div>
         <div class="role-meta"><b>Hunter Frishman</b><span>ADMIN</span></div>
       </div>
@@ -583,7 +583,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
       <div class="topbar-right">
         <div class="daterange" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'This month'},{label:'Jul 12 – Jul 18, 2026'},{label:'Custom range…'}])"> <svg class="icon" style="width:14px;height:14px"><use href="#i-cal"/></svg> Jul 12 – Jul 18, 2026 <svg class="icon" style="width:13px;height:13px"><use href="#i-chevron-down"/></svg></div>
         <button class="icon-btn" id="notifBellBtn" style="position:relative" onclick="event.stopPropagation(); showNotifications(this)"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot" id="notifDot" style="display:none;"></span></button>
-        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Account settings'},{label:'Notification preferences'},{label:'Sign out', danger:true}])">HF</div>
+        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Account settings'},{label:'Notification preferences'},{label:'Sign out', danger:true}])">HF</div>
       </div>
     </header>
 
@@ -998,6 +998,8 @@ let detectedIP = null;
 async function apiFetch(path, options = {}){
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   if(authToken) headers['Authorization'] = 'Bearer ' + authToken;
+  const deviceToken = safeStorageGet('tp_device_token');
+  if(deviceToken) headers['X-Device-Token'] = deviceToken;
   const res = await fetch(API_BASE + path, { ...options, headers });
   let data = null;
   try { data = await res.json(); } catch(e){ /* no body, e.g. 204 */ }
@@ -1248,6 +1250,88 @@ function showNotificationPrefsModal(){
       toast(err.message, 'danger');
     }
   };
+}
+
+function showTrustDeviceModal(){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:400px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-lock"/></svg></div>
+      <h3>Trust This Device</h3>
+      <p>This device will be able to sign in from any IP address afterward, bypassing the IP whitelist. Only do this on a device you control.</p>
+      <div style="margin-bottom:18px;">
+        <div class="detail-label" style="margin-bottom:5px;">Device Label</div>
+        <input id="tdLabel" type="text" placeholder="e.g. Hunter's Laptop" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="tdCancel">Cancel</button>
+        <button class="btn btn-primary" id="tdConfirm">Trust Device</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#tdCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#tdConfirm').onclick = async () => {
+    const label = document.getElementById('tdLabel').value.trim() || 'Unnamed device';
+    try {
+      const data = await apiFetch('/auth/trust-device', { method: 'POST', body: JSON.stringify({ label }) });
+      safeStorageSet('tp_device_token', data.token);
+      root.remove();
+      toast('This device is now trusted — it will bypass the IP whitelist going forward.');
+    } catch(err) {
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+async function showManageDevicesModal(){
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:440px;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-lock"/></svg></div>
+      <h3>Trusted Devices</h3>
+      <p>Devices that can sign in from any IP, bypassing the whitelist.</p>
+      <div id="tdList" style="margin-bottom:16px;"><div style="text-align:center; padding:14px; color:var(--text-faint); font-size:12px;">Loading…</div></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="tdmClose">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#tdmClose').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+
+  try {
+    const data = await apiFetch('/auth/trusted-devices');
+    const listEl = root.querySelector('#tdList');
+    if(!data.devices || data.devices.length === 0){
+      listEl.innerHTML = `<div class="empty-state" style="padding:20px 10px;"><b>No trusted devices yet</b><div>Use "Trust This Device" to add one.</div></div>`;
+      return;
+    }
+    listEl.innerHTML = data.devices.map(d => `
+      <div class="list-row">
+        <div class="list-row-main">
+          <svg class="icon" style="width:15px;height:15px;color:var(--text-dim)"><use href="#i-lock"/></svg>
+          <div><b>${d.label || 'Unnamed device'}</b><span>Added ${new Date(d.created_at + 'Z').toLocaleDateString()} from ${d.created_ip || 'unknown'}${d.last_used_at ? ' · Last used ' + new Date(d.last_used_at + 'Z').toLocaleDateString() : ''}</span></div>
+        </div>
+        <div class="row-actions">
+          <div class="action-icon danger" title="Revoke" onclick="revokeTrustedDevice(${d.id}, this)"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+        </div>
+      </div>`).join('');
+  } catch(err) {
+    root.querySelector('#tdList').innerHTML = `<div style="color:var(--red); font-size:12px; text-align:center; padding:14px;">Failed to load: ${err.message}</div>`;
+  }
+}
+
+async function revokeTrustedDevice(id, el){
+  try {
+    await apiFetch('/auth/trusted-devices/' + id, { method: 'DELETE' });
+    el.closest('.list-row').remove();
+    toast('Device trust revoked');
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
 }
 
 async function showNotifications(el){
@@ -1588,7 +1672,9 @@ async function initAuthGate(){
   renderCheckingScreen();
   let ipRes;
   try {
-    const res = await fetch(API_BASE + '/auth/ip-check', { cache: 'no-store' });
+    const deviceToken = safeStorageGet('tp_device_token');
+    const headers = deviceToken ? { 'X-Device-Token': deviceToken } : {};
+    const res = await fetch(API_BASE + '/auth/ip-check', { cache: 'no-store', headers });
     detectedIP = null;
     try { const body = await res.json(); detectedIP = body.ip; } catch(e){}
     ipRes = res;
@@ -3096,6 +3182,8 @@ function menu(el, items){
       if(items[i].label === 'View profile'){ closeMenus(); showProfileModal(); return; }
       if(items[i].label === 'Switch role'){ closeMenus(); toast('Role changes are managed by an Admin in Admin Settings → Users', 'warn'); return; }
       if(items[i].label === 'Notification preferences'){ closeMenus(); showNotificationPrefsModal(); return; }
+      if(items[i].label === 'Trust This Device'){ closeMenus(); showTrustDeviceModal(); return; }
+      if(items[i].label === 'Manage Trusted Devices'){ closeMenus(); showManageDevicesModal(); return; }
       toast(items[i].label, items[i].danger ? 'danger' : 'success');
       closeMenus();
     });
