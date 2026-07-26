@@ -3013,6 +3013,11 @@ function showCompletedDetail(id){
   root.querySelector('#cdDownload').onclick = () => { rowAction('Invoice downloaded for ' + b.id, 'success'); };
 }
 
+const CAR_RENTAL_VENDORS = ['Hertz', 'Enterprise', 'Avis', 'Budget', 'National', 'Alamo', 'Dollar', 'Thrifty', 'Sixt'];
+function isCarRental(b){
+  return !!b.vendor && CAR_RENTAL_VENDORS.some(v => b.vendor.includes(v));
+}
+
 function showBookingDetail(id){
   const b = pendingData.find(x=>x.id===id);
   if(!b) return;
@@ -3071,7 +3076,7 @@ function showBookingDetail(id){
       </div>
 
       ${b.flightNumber ? `
-      <div class="detail-section-title">Flight Schedule</div>
+      <div class="detail-section-title">${isCarRental(b) ? 'Rental Schedule' : 'Flight Schedule'}</div>
       <div class="flight-strip">
         <div class="flight-strip-point">
           <div class="flight-strip-time">${b.depTime}</div>
@@ -3081,7 +3086,7 @@ function showBookingDetail(id){
         </div>
         <div class="flight-strip-mid">
           <div class="flight-strip-num">${b.flightNumber}</div>
-          <div class="flight-strip-line"><svg class="icon" style="width:14px;height:14px;color:var(--orange-2)"><use href="#i-plane"/></svg></div>
+          <div class="flight-strip-line"><svg class="icon" style="width:14px;height:14px;color:var(--orange-2)"><use href="#${isCarRental(b) ? 'i-doc' : 'i-plane'}"/></svg></div>
           <div class="flight-strip-dur">${b.flightDuration} · ${b.flightStops}</div>
         </div>
         <div class="flight-strip-point" style="text-align:right;">
