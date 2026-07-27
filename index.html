@@ -2603,14 +2603,17 @@ function openVendorSite(vendor){
 /* ============================================================
    GENERATE VIRTUAL CARD (VCC) TO MAKE THE PURCHASE
 ============================================================ */
-function showVCCRestrictedModal(bookingId, payStatus){
+function showVCCRestrictedModal(bookingId, payStatus, vendorRestricted){
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
+  const message = vendorRestricted
+    ? `${bookingId} is not eligible for a virtual card — VCC generation is restricted for this rental provider.`
+    : `${bookingId} is not eligible for a virtual card yet — payment status is currently <b style="color:var(--text);">${payStatus}</b>. A VCC can only be generated once payment has cleared.`;
   root.innerHTML = `
     <div class="modal-box">
       <div class="modal-icon" style="background:var(--amber-dim); color:var(--amber);"><svg class="icon"><use href="#i-lock"/></svg></div>
       <h3>VCC Restricted</h3>
-      <p>${bookingId} is not eligible for a virtual card yet — payment status is currently <b style="color:var(--text);">${payStatus}</b>. A VCC can only be generated once payment has cleared.</p>
+      <p>${message}</p>
       <div class="modal-actions">
         <button class="btn btn-primary" id="vccRestrictedClose">Got it</button>
       </div>
@@ -2620,7 +2623,14 @@ function showVCCRestrictedModal(bookingId, payStatus){
   root.addEventListener('click', e => { if(e.target === root) root.remove(); });
 }
 
+const VCC_ALWAYS_RESTRICTED_VENDORS = ['Avis', 'Budget'];
+
 function showVCCModal(bookingId, amount, vendor, payStatus){
+  const vendorRestricted = vendor && VCC_ALWAYS_RESTRICTED_VENDORS.some(v => vendor.includes(v));
+  if(vendorRestricted){
+    showVCCRestrictedModal(bookingId, payStatus || 'Paid', true);
+    return;
+  }
   if(payStatus && payStatus !== 'Paid'){
     showVCCRestrictedModal(bookingId, payStatus);
     return;
