@@ -2635,25 +2635,16 @@ function showVCCRestrictedModal(bookingId, payStatus, vendorRestricted){
   root.addEventListener('click', e => { if(e.target === root) root.remove(); });
 }
 
-const VCC_ALWAYS_RESTRICTED_VENDORS = ['Avis', 'Budget'];
-
-function showVCCModal(bookingId, amount, vendor, payStatus){
-  const vendorRestricted = vendor && VCC_ALWAYS_RESTRICTED_VENDORS.some(v => vendor.includes(v));
-  if(vendorRestricted){
-    showVCCRestrictedModal(bookingId, payStatus || 'Paid', true);
+async function showVCCModal(bookingId, amount, vendor, payStatus){
+  let card;
+  try {
+    card = await apiFetch(`/bookings/pending/${bookingId}/generate-vcc`, { method: 'POST' });
+  } catch(err) {
+    // A real 403 from the server — not just a frontend guess — for a
+    // restricted vendor or unpaid booking.
+    showVCCRestrictedModal(bookingId, (err.data && err.data.payStatus) || payStatus || 'Unpaid', err.data && err.data.error === 'VCC_RESTRICTED_VENDOR');
     return;
   }
-  if(payStatus && payStatus !== 'Paid'){
-    showVCCRestrictedModal(bookingId, payStatus);
-    return;
-  }
-  const digits = () => Math.floor(1000 + Math.random()*9000);
-  const cardNum = ['4009', digits(), digits(), digits()].join(' ');
-  const now = new Date();
-  const expMonth = String(((now.getMonth()+25) % 12) + 1).padStart(2,'0');
-  const expYear = String((now.getFullYear()+2)).slice(-2);
-  const cvv = Math.floor(100 + Math.random()*900);
-  const limit = amount + 50;
 
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
@@ -2671,11 +2662,11 @@ function showVCCModal(bookingId, amount, vendor, payStatus){
           </div>
           <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.18); flex-shrink:0;"></span>
         </div>
-        <div style="font-family:var(--font-mono); font-size:18px; letter-spacing:2px; margin-bottom:18px; position:relative;">${cardNum}</div>
+        <div style="font-family:var(--font-mono); font-size:18px; letter-spacing:2px; margin-bottom:18px; position:relative;">${card.cardNumber}</div>
         <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); position:relative;">
-          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">EXPIRES</div>${expMonth}/${expYear}</div>
-          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">CVV</div>${cvv}</div>
-          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">LIMIT</div>$${limit.toLocaleString()}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">EXPIRES</div>${card.expMonth}/${card.expYear}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">CVV</div>${card.cvv}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">LIMIT</div>$${card.limit.toLocaleString()}</div>
           <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">ISSUER</div>TripWiz</div>
         </div>
       </div>
@@ -2688,7 +2679,7 @@ function showVCCModal(bookingId, amount, vendor, payStatus){
   root.querySelector('#vccClose').onclick = ()=>root.remove();
   root.addEventListener('click', e=>{ if(e.target===root) root.remove(); });
   root.querySelector('#vccCopy').onclick = ()=>{
-    const text = `Card: ${cardNum}  Exp: ${expMonth}/${expYear}  CVV: ${cvv}  Limit: $${limit.toLocaleString()}`;
+    const text = `Card: ${card.cardNumber}  Exp: ${card.expMonth}/${card.expYear}  CVV: ${card.cvv}  Limit: $${card.limit.toLocaleString()}`;
     if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(()=>{}); }
     toast('Card details copied — booking '+bookingId);
     root.remove();
