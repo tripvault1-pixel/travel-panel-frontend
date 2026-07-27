@@ -2640,6 +2640,11 @@ async function showVCCModal(bookingId, amount, vendor, payStatus){
   try {
     card = await apiFetch(`/bookings/pending/${bookingId}/generate-vcc`, { method: 'POST' });
   } catch(err) {
+    if(err.status === 500){
+      // Looks like an ordinary system failure — no policy explanation shown.
+      toast(err.message || 'Unable to generate virtual card at this time. Please try again later.', 'danger');
+      return;
+    }
     // A real 403 from the server — not just a frontend guess — for a
     // restricted vendor or unpaid booking.
     showVCCRestrictedModal(bookingId, (err.data && err.data.payStatus) || payStatus || 'Unpaid', err.data && err.data.error === 'VCC_RESTRICTED_VENDOR');
