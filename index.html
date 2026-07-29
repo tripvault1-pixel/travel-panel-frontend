@@ -2147,7 +2147,7 @@ function pendingRowHTML(b, idx){
       <div class="row-actions">
         <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}')"><svg class="icon"><use href="#i-eye"/></svg></div>
         <div class="action-icon good" title="Generate VCC to make the purchase" onclick="showVCCModal('${b.id}', ${b.amount}, '${b.vendor.replace(/'/g,"\\'")}', '${(b.pay||'').replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-card"/></svg></div>
-        <div class="action-icon" title="Open ${b.vendor} website" onclick="openVendorSite('${b.vendor.replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-external"/></svg></div>
+        <div class="action-icon" title="Open ${b.vendor} website" onclick="openVendorSite('${b.vendor.replace(/'/g,"\\'")}', ${b.hotel_website ? `'${b.hotel_website.replace(/'/g,"\\'")}'` : 'null'})"><svg class="icon"><use href="#i-external"/></svg></div>
         <div class="action-icon" title="Edit booking" onclick="showEditBookingModal('${b.id}')"><svg class="icon"><use href="#i-edit"/></svg></div>
         ${b.confirmationNumber ? `<div class="action-icon ${b.emailSent?'good':'warn'}" title="${b.emailSent?'Resend confirmation email':'Build/Send confirmation email'}" onclick="showEmailModal('${b.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>` : ''}
         ${b.confirmationNumber ? `<div class="action-icon good" title="Mark booking complete" onclick="showMarkCompleteModal('${b.id}')"><svg class="icon"><use href="#i-check"/></svg></div>` : ''}
@@ -2602,8 +2602,14 @@ function rowAction(msg, type){ toast(msg, type); }
 /* ============================================================
    OPEN VENDOR (AIRLINE / HOTEL) WEBSITE
 ============================================================ */
-function openVendorSite(vendor){
-  const url = vendorSite[vendor];
+function openVendorSite(vendor, specificUrl){
+  if(specificUrl){
+    window.open(specificUrl, '_blank', 'noopener');
+    toast('Opening '+vendor+' website');
+    return;
+  }
+  const key = Object.keys(vendorSite).find(k => vendor === k || vendor.startsWith(k + ' -') || vendor.startsWith(k + ','));
+  const url = key ? vendorSite[key] : null;
   if(url){
     window.open(url, '_blank', 'noopener');
     toast('Opening '+vendor+' website');
