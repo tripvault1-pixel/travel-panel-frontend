@@ -175,6 +175,66 @@ svg.icon{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1
 .page.active{display:block;}
 @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
+/* Per-agent animated background themes — a fixed layer behind all content,
+   tinted with the current accent color so it stays cohesive with whatever
+   accent the user has chosen. Deliberately subtle: low opacity / heavy blur
+   so it never competes with text readability. */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+}
+body.bg-aurora::before{
+  background:
+    radial-gradient(circle at 20% 20%, var(--orange-glow), transparent 40%),
+    radial-gradient(circle at 80% 70%, var(--blue-dim), transparent 45%),
+    radial-gradient(circle at 50% 95%, var(--orange-dim), transparent 40%);
+  filter:blur(60px);
+  opacity:.65;
+  animation:auroraDrift 22s ease-in-out infinite alternate;
+}
+@keyframes auroraDrift{0%{transform:translate(0,0) scale(1);}50%{transform:translate(3%,-3%) scale(1.06);}100%{transform:translate(-2%,2%) scale(1);}}
+
+body.bg-grid::before{
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:42px 42px;
+  opacity:.5;
+  -webkit-mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  animation:gridPan 34s linear infinite;
+}
+@keyframes gridPan{from{background-position:0 0,0 0;}to{background-position:42px 42px,42px 42px;}}
+
+body.bg-nebula::before{
+  background:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,.55), transparent),
+    radial-gradient(1.5px 1.5px at 80% 60%, rgba(255,255,255,.45), transparent),
+    radial-gradient(2px 2px at 50% 80%, rgba(255,255,255,.4), transparent),
+    radial-gradient(2px 2px at 30% 45%, rgba(255,255,255,.35), transparent),
+    radial-gradient(1px 1px at 65% 15%, rgba(255,255,255,.4), transparent),
+    radial-gradient(circle at 70% 25%, var(--orange-glow), transparent 35%);
+  background-size:220px 220px,260px 260px,300px 300px,180px 180px,240px 240px,100% 100%;
+  animation:nebulaTwinkle 6s ease-in-out infinite alternate;
+}
+@keyframes nebulaTwinkle{0%{opacity:.55;}100%{opacity:.9;}}
+
+body.bg-glow::before{
+  background:radial-gradient(circle at 50% 105%, var(--orange-glow), transparent 55%);
+  animation:glowPulse 5s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{opacity:.35;}50%{opacity:.65;}}
+
+body.bg-waves::before{
+  background:repeating-linear-gradient(120deg, var(--orange-dim) 0px, transparent 2px, transparent 90px);
+  opacity:.4;
+  animation:wavesDrift 20s linear infinite;
+}
+@keyframes wavesDrift{from{background-position:0 0;}to{background-position:450px 0;}}
+
 .page-header{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; gap:16px; flex-wrap:wrap;}
 .page-eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--orange-2); margin-bottom:6px; display:flex; align-items:center; gap:8px;}
 .page-title{font-family:var(--font-display); font-size:26px; font-weight:600; letter-spacing:-.3px;}
@@ -585,7 +645,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
       <div class="topbar-right">
         <div class="daterange" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'This month'},{label:'Jul 12 – Jul 18, 2026'},{label:'Custom range…'}])"> <svg class="icon" style="width:14px;height:14px"><use href="#i-cal"/></svg> Jul 12 – Jul 18, 2026 <svg class="icon" style="width:13px;height:13px"><use href="#i-chevron-down"/></svg></div>
         <button class="icon-btn" id="notifBellBtn" style="position:relative" onclick="event.stopPropagation(); showNotifications(this)"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot" id="notifDot" style="display:none;"></span></button>
-        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Account settings'},{label:'Notification preferences'},{label:'Accent Color'},{label:'Sign out', danger:true}])">HF</div>
+        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Account settings'},{label:'Notification preferences'},{label:'Accent Color'},{label:'Background Theme'},{label:'Sign out', danger:true}])">HF</div>
       </div>
     </header>
 
@@ -1267,11 +1327,32 @@ async function setAccentColor(colorKey){
   }
 }
 
+const BACKGROUND_STYLES = ['aurora', 'grid', 'nebula', 'glow', 'waves'];
+
+function applyBackgroundStyle(styleKey){
+  BACKGROUND_STYLES.forEach(s => document.body.classList.remove('bg-' + s));
+  if(styleKey && BACKGROUND_STYLES.includes(styleKey)){
+    document.body.classList.add('bg-' + styleKey);
+  }
+}
+
+async function setBackgroundStyle(styleKey){
+  try {
+    await apiFetch('/auth/background-style', { method: 'PATCH', body: JSON.stringify({ backgroundStyle: styleKey }) });
+    if(profileData) profileData.background_style = styleKey;
+    applyBackgroundStyle(styleKey);
+    toast(styleKey ? 'Background updated' : 'Background reset to default');
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
+}
+
 async function loadProfile(){
   try {
     const data = await apiFetch('/auth/me');
     profileData = data.user;
     applyAccentColor(profileData.accent_color);
+    applyBackgroundStyle(profileData.background_style);
   } catch(err) {
     console.warn('Failed to load profile:', err.message);
   }
@@ -1368,6 +1449,86 @@ function showAccentColorModal(){
     sw.onclick = async () => {
       const key = sw.dataset.color || null;
       await setAccentColor(key);
+      root.remove();
+    };
+  });
+}
+
+function showBackgroundStyleModal(){
+  const current = (profileData && profileData.background_style) || null;
+  const labels = { aurora: 'Aurora', grid: 'Grid', nebula: 'Nebula', glow: 'Glow', waves: 'Waves' };
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  const cards = BACKGROUND_STYLES.map(key => `
+    <div class="bg-style-card" data-style="${key}" style="width:104px; cursor:pointer;">
+      <div class="bg-style-preview bg-${key}" style="position:relative; width:104px; height:72px; border-radius:10px; overflow:hidden; background:var(--bg); border:2px solid ${current===key ? 'var(--orange)' : 'var(--border-strong)'};"></div>
+      <div style="text-align:center; font-size:11px; margin-top:6px; color:${current===key ? 'var(--text)' : 'var(--text-dim)'};">${labels[key]}</div>
+    </div>
+  `).join('');
+  root.innerHTML = `
+    <div class="modal-box" style="width:420px; text-align:left;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-edit"/></svg></div>
+      <h3>Background Theme</h3>
+      <p>Pick a subtle animated background — only visible to you.</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin:16px 0 4px;">
+        ${cards}
+        <div class="bg-style-card" data-style="" style="width:104px; cursor:pointer;">
+          <div style="width:104px; height:72px; border-radius:10px; background:var(--surface-2); border:2px dashed var(--border-strong); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-faint);">Reset</div>
+          <div style="text-align:center; font-size:11px; margin-top:6px; color:var(--text-dim);">Default</div>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:18px;">
+        <button class="btn btn-ghost" id="bsClose">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  // Give each preview tile its own scoped copy of the real background CSS
+  // (the live one lives on <body>::before, which we don't want to touch
+  // just to preview an option the user hasn't picked yet).
+  const style = document.createElement('style');
+  style.textContent = `
+    .bg-style-preview{ position:relative; }
+    .bg-style-preview::after{ content:''; position:absolute; inset:0; }
+    .bg-style-preview.bg-aurora::after{
+      background:
+        radial-gradient(circle at 20% 20%, var(--orange-glow), transparent 40%),
+        radial-gradient(circle at 80% 70%, var(--blue-dim), transparent 45%),
+        radial-gradient(circle at 50% 95%, var(--orange-dim), transparent 40%);
+      filter:blur(14px); opacity:.9; animation:auroraDrift 22s ease-in-out infinite alternate;
+    }
+    .bg-style-preview.bg-grid::after{
+      background-image:
+        linear-gradient(var(--border-strong) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-strong) 1px, transparent 1px);
+      background-size:14px 14px; opacity:.8; animation:gridPan 34s linear infinite;
+    }
+    .bg-style-preview.bg-nebula::after{
+      background:
+        radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,.6), transparent),
+        radial-gradient(1.5px 1.5px at 80% 60%, rgba(255,255,255,.5), transparent),
+        radial-gradient(2px 2px at 50% 80%, rgba(255,255,255,.45), transparent),
+        radial-gradient(2px 2px at 30% 45%, rgba(255,255,255,.4), transparent),
+        radial-gradient(1px 1px at 65% 15%, rgba(255,255,255,.45), transparent),
+        radial-gradient(circle at 70% 25%, var(--orange-glow), transparent 35%);
+      background-size:70px 70px,80px 80px,90px 90px,60px 60px,75px 75px,100% 100%;
+      animation:nebulaTwinkle 6s ease-in-out infinite alternate;
+    }
+    .bg-style-preview.bg-glow::after{
+      background:radial-gradient(circle at 50% 105%, var(--orange-glow), transparent 60%);
+      animation:glowPulse 5s ease-in-out infinite;
+    }
+    .bg-style-preview.bg-waves::after{
+      background:repeating-linear-gradient(120deg, var(--orange-dim) 0px, transparent 2px, transparent 22px);
+      opacity:.7; animation:wavesDrift 20s linear infinite;
+    }
+  `;
+  root.appendChild(style);
+  root.querySelector('#bsClose').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelectorAll('.bg-style-card').forEach(card => {
+    card.onclick = async () => {
+      const key = card.dataset.style || null;
+      await setBackgroundStyle(key);
       root.remove();
     };
   });
@@ -3505,6 +3666,7 @@ function menu(el, items){
       if(items[i].label === 'Switch role'){ closeMenus(); toast('Role changes are managed by an Admin in Admin Settings → Users', 'warn'); return; }
       if(items[i].label === 'Notification preferences'){ closeMenus(); showNotificationPrefsModal(); return; }
       if(items[i].label === 'Accent Color'){ closeMenus(); showAccentColorModal(); return; }
+      if(items[i].label === 'Background Theme'){ closeMenus(); showBackgroundStyleModal(); return; }
       if(items[i].label === 'Trust This Device'){ closeMenus(); showTrustDeviceModal(); return; }
       if(items[i].label === 'Manage Trusted Devices'){ closeMenus(); showManageDevicesModal(); return; }
       toast(items[i].label, items[i].danger ? 'danger' : 'success');
