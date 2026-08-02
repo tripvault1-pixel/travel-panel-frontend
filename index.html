@@ -2096,6 +2096,7 @@ function mapPendingRow(row){
     depDate: row.dep_date, depTime: row.dep_time, depTz: row.dep_tz,
     arrDate: row.arr_date, arrTime: row.arr_time, arrTz: row.arr_tz,
     hotel_website: row.hotel_website,
+    hotel_address: row.hotel_address,
     escalation_reason: row.escalation_reason,
     passengers: (row.passengers && row.passengers.length) ? row.passengers : [{ name: row.customer, gender: 'Not on file', dob: row.dob || 'Not on file' }],
   };
@@ -2184,7 +2185,7 @@ function pendingRowHTML(b, idx){
     <td><div class="cust-cell hoverable-name" onmouseenter="showBillingTip(this,'${b.id}','pending')" onmouseleave="hideBillingTip()"><div class="cust-avatar">${initials(b.customer)}</div>${b.customer}${b.passengers.length>1?`<span class="pax-badge">+${b.passengers.length-1}</span>`:''}</div></td>
     <td>${b.dest}</td>
     <td class="cell-mono">${b.dates}</td>
-    <td>${b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
+    <td>${b.hotel_address ? `<span title="${b.hotel_address.replace(/"/g,'&quot;')}" style="cursor:help; border-bottom:1px dotted var(--text-faint);">${b.vendor}</span>` : b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
     <td class="cell-strong">$${b.amount.toLocaleString()}</td>
     <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
     <td>${b.source}</td>
@@ -2286,7 +2287,7 @@ function escalatedRowHTML(b){
     <td><div class="cust-cell hoverable-name" onmouseenter="showBillingTip(this,'${b.id}','escalated')" onmouseleave="hideBillingTip()"><div class="cust-avatar">${initials(b.customer)}</div>${b.customer}</div></td>
     <td>${b.dest}</td>
     <td class="cell-mono">${b.dates}</td>
-    <td>${b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
+    <td>${b.hotel_address ? `<span title="${b.hotel_address.replace(/"/g,'&quot;')}" style="cursor:help; border-bottom:1px dotted var(--text-faint);">${b.vendor}</span>` : b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
     <td class="cell-strong">$${b.amount.toLocaleString()}</td>
     <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
     <td class="cell-sub">${b.escalation_reason || 'Escalated by agent'}</td>
