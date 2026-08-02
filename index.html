@@ -132,6 +132,24 @@ svg.icon{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1
 .role-meta span{font-size:10.5px; color:var(--orange-2); font-family:var(--font-mono);}
 .sidebar.collapsed .role-meta{display:none;}
 
+/* ---- Easter egg: two cats pop up when hovering the sidebar profile name ---- */
+.cat-hover-zone{position:relative;}
+.cat-popup{
+  position:absolute; bottom:calc(100% + 10px); left:0; z-index:250;
+  display:flex; gap:10px; padding:12px 14px 10px;
+  background:var(--surface-2); border:1px solid var(--border-strong); border-radius:var(--radius-md);
+  box-shadow:0 16px 32px -10px rgba(0,0,0,0.6);
+  opacity:0; transform:translateY(8px) scale(.96); pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
+}
+.cat-hover-zone:hover .cat-popup{opacity:1; transform:translateY(0) scale(1); pointer-events:auto;}
+.cat-card{display:flex; flex-direction:column; align-items:center; gap:4px; width:64px;}
+.cat-card span{font-size:10.5px; font-family:var(--font-display); font-weight:700; color:var(--text-dim);}
+.cat-card svg{filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4));}
+.cat-svg .cat-tail{transform-origin:20px 62px; animation:catTailSwish 2.4s ease-in-out infinite;}
+.cat-card:nth-child(2) .cat-tail{animation-delay:.3s;}
+@keyframes catTailSwish{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(10deg);}}
+
 /* ---- Main / topbar ---- */
 .main{flex:1; min-width:0; display:flex; flex-direction:column;}
 .topbar{
@@ -626,9 +644,58 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
     <a class="nav-item" data-page="admin" id="navAdminSettings"><svg class="icon"><use href="#i-lock"/></svg><span class="label">Admin Settings</span></a>
 
     <div class="sidebar-footer">
-      <div class="role-pill" id="sidebarProfile" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Switch role'},{label:'Account settings'},{label:'Sign out', danger:true}])">
-        <div class="role-avatar">HF</div>
-        <div class="role-meta"><b>Hunter Frishman</b><span>ADMIN</span></div>
+      <div class="cat-hover-zone">
+        <div class="cat-popup">
+          <div class="cat-card">
+            <svg class="cat-svg" width="60" height="70" viewBox="0 0 64 74">
+              <path class="cat-tail" d="M46 58 C 58 56, 60 42, 50 34 C 58 40, 58 54, 47 60 Z" fill="#0C0D10"/>
+              <ellipse cx="32" cy="50" rx="18" ry="20" fill="#0C0D10"/>
+              <ellipse cx="32" cy="47" rx="7.5" ry="13.5" fill="#F4F4F2"/>
+              <ellipse cx="23" cy="66" rx="5.5" ry="4.5" fill="#F4F4F2"/>
+              <ellipse cx="41" cy="66" rx="5.5" ry="4.5" fill="#F4F4F2"/>
+              <circle cx="32" cy="24" r="15" fill="#0C0D10"/>
+              <path d="M19 15 L22 3 L27 14 Z" fill="#0C0D10"/>
+              <path d="M45 15 L42 3 L37 14 Z" fill="#0C0D10"/>
+              <path d="M21 12 L23 6 L26 12 Z" fill="#E88A9A"/>
+              <path d="M43 12 L41 6 L38 12 Z" fill="#E88A9A"/>
+              <ellipse cx="25.5" cy="24" rx="3.4" ry="4.4" fill="#C9E26B"/>
+              <ellipse cx="38.5" cy="24" rx="3.4" ry="4.4" fill="#C9E26B"/>
+              <circle cx="25.5" cy="25" r="1.5" fill="#0C0D10"/>
+              <circle cx="38.5" cy="25" r="1.5" fill="#0C0D10"/>
+              <path d="M31 29 L33 29 L32 31 Z" fill="#E88A9A"/>
+              <path d="M32 31 Q32 33 29 33.5 M32 31 Q32 33 35 33.5" stroke="#0C0D10" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+              <path d="M10 22 L20 24 M10 27 L20 26 M10 32 L19 29" stroke="#9AA1AF" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+              <path d="M54 22 L44 24 M54 27 L44 26 M54 32 L45 29" stroke="#9AA1AF" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+            </svg>
+            <span>Bean</span>
+          </div>
+          <div class="cat-card">
+            <svg class="cat-svg" width="60" height="70" viewBox="0 0 64 74">
+              <path class="cat-tail" d="M18 58 C 6 56, 4 42, 14 34 C 6 40, 6 54, 17 60 Z" fill="#0C0D10"/>
+              <ellipse cx="32" cy="50" rx="18" ry="20" fill="#0C0D10"/>
+              <ellipse cx="32" cy="47" rx="7.5" ry="13.5" fill="#F4F4F2"/>
+              <ellipse cx="23" cy="66" rx="5.5" ry="4.5" fill="#F4F4F2"/>
+              <ellipse cx="41" cy="66" rx="5.5" ry="4.5" fill="#F4F4F2"/>
+              <circle cx="32" cy="24" r="15" fill="#0C0D10"/>
+              <path d="M19 15 L22 3 L27 14 Z" fill="#0C0D10"/>
+              <path d="M45 15 L42 3 L37 14 Z" fill="#0C0D10"/>
+              <path d="M21 12 L23 6 L26 12 Z" fill="#F4F4F2"/>
+              <path d="M43 12 L41 6 L38 12 Z" fill="#F4F4F2"/>
+              <path d="M22 24 Q25.5 21 29 24" stroke="#0C0D10" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <ellipse cx="38.5" cy="24" rx="3.4" ry="4.4" fill="#C9E26B"/>
+              <circle cx="38.5" cy="25" r="1.5" fill="#0C0D10"/>
+              <path d="M31 29 L33 29 L32 31 Z" fill="#E88A9A"/>
+              <path d="M32 31 Q32 33 29 33.5 M32 31 Q32 33 35 33.5" stroke="#0C0D10" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+              <path d="M10 22 L20 24 M10 27 L20 26 M10 32 L19 29" stroke="#9AA1AF" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+              <path d="M54 22 L44 24 M54 27 L44 26 M54 32 L45 29" stroke="#9AA1AF" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+            </svg>
+            <span>George</span>
+          </div>
+        </div>
+        <div class="role-pill" id="sidebarProfile" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Switch role'},{label:'Account settings'},{label:'Sign out', danger:true}])">
+          <div class="role-avatar">HF</div>
+          <div class="role-meta"><b>Hunter Frishman</b><span>ADMIN</span></div>
+        </div>
       </div>
     </div>
   </aside>
