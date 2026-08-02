@@ -585,7 +585,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
       <div class="topbar-right">
         <div class="daterange" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'This month'},{label:'Jul 12 – Jul 18, 2026'},{label:'Custom range…'}])"> <svg class="icon" style="width:14px;height:14px"><use href="#i-cal"/></svg> Jul 12 – Jul 18, 2026 <svg class="icon" style="width:13px;height:13px"><use href="#i-chevron-down"/></svg></div>
         <button class="icon-btn" id="notifBellBtn" style="position:relative" onclick="event.stopPropagation(); showNotifications(this)"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot" id="notifDot" style="display:none;"></span></button>
-        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Account settings'},{label:'Notification preferences'},{label:'Sign out', danger:true}])">HF</div>
+        <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Account settings'},{label:'Notification preferences'},{label:'Accent Color'},{label:'Sign out', danger:true}])">HF</div>
       </div>
     </header>
 
@@ -1231,10 +1231,47 @@ function logout(){
 
 let profileData = null;
 
+const ACCENT_PALETTE = {
+  orange: { accent: '#FF7A1A', accent2: '#FF9640', dim: '#3A2414', glow: 'rgba(255,122,26,0.35)' },
+  blue:   { accent: '#5FA8FF', accent2: '#7FBBFF', dim: '#122036', glow: 'rgba(95,168,255,0.35)' },
+  green:  { accent: '#34D399', accent2: '#5EE0B4', dim: '#123024', glow: 'rgba(52,211,153,0.35)' },
+  purple: { accent: '#B084F5', accent2: '#C7A3F9', dim: '#241A38', glow: 'rgba(176,132,245,0.35)' },
+  pink:   { accent: '#F76CA8', accent2: '#FA8FBE', dim: '#341A28', glow: 'rgba(247,108,168,0.35)' },
+  amber:  { accent: '#FBBF24', accent2: '#FCD34D', dim: '#332608', glow: 'rgba(251,191,36,0.35)' },
+};
+
+function applyAccentColor(colorKey){
+  const c = ACCENT_PALETTE[colorKey];
+  const root = document.documentElement.style;
+  if(c){
+    root.setProperty('--orange', c.accent);
+    root.setProperty('--orange-2', c.accent2);
+    root.setProperty('--orange-dim', c.dim);
+    root.setProperty('--orange-glow', c.glow);
+  } else {
+    root.removeProperty('--orange');
+    root.removeProperty('--orange-2');
+    root.removeProperty('--orange-dim');
+    root.removeProperty('--orange-glow');
+  }
+}
+
+async function setAccentColor(colorKey){
+  try {
+    await apiFetch('/auth/accent-color', { method: 'PATCH', body: JSON.stringify({ accentColor: colorKey }) });
+    if(profileData) profileData.accent_color = colorKey;
+    applyAccentColor(colorKey);
+    toast(colorKey ? 'Accent color updated' : 'Accent color reset to default');
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
+}
+
 async function loadProfile(){
   try {
     const data = await apiFetch('/auth/me');
     profileData = data.user;
+    applyAccentColor(profileData.accent_color);
   } catch(err) {
     console.warn('Failed to load profile:', err.message);
   }
@@ -1298,6 +1335,42 @@ function showNotificationPrefsModal(){
       toast(err.message, 'danger');
     }
   };
+}
+
+function showAccentColorModal(){
+  const current = (profileData && profileData.accent_color) || null;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  const swatches = Object.entries(ACCENT_PALETTE).map(([key, c]) => `
+    <div class="accent-swatch" data-color="${key}" title="${key[0].toUpperCase()+key.slice(1)}"
+      style="width:38px;height:38px;border-radius:50%;background:${c.accent};cursor:pointer;border:3px solid ${current===key?'#fff':'transparent'};box-shadow:${current===key?'0 0 0 2px '+c.accent:'none'};transition:transform .1s;"
+      onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"></div>
+  `).join('');
+  root.innerHTML = `
+    <div class="modal-box" style="width:380px; text-align:left;">
+      <div class="modal-icon"><svg class="icon"><use href="#i-edit"/></svg></div>
+      <h3>Accent Color</h3>
+      <p>Pick your own accent color for the dashboard — this only changes what you see.</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin:16px 0 4px;">
+        ${swatches}
+        <div class="accent-swatch" data-color="" title="Default (Orange)"
+          style="width:38px;height:38px;border-radius:50%;background:var(--surface-2);border:2px dashed var(--border-strong);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-faint);"
+          onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">Reset</div>
+      </div>
+      <div class="modal-actions" style="margin-top:18px;">
+        <button class="btn btn-ghost" id="acClose">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#acClose').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelectorAll('.accent-swatch').forEach(sw => {
+    sw.onclick = async () => {
+      const key = sw.dataset.color || null;
+      await setAccentColor(key);
+      root.remove();
+    };
+  });
 }
 
 function showTrustDeviceModal(){
@@ -3431,6 +3504,7 @@ function menu(el, items){
       if(items[i].label === 'View profile'){ closeMenus(); showProfileModal(); return; }
       if(items[i].label === 'Switch role'){ closeMenus(); toast('Role changes are managed by an Admin in Admin Settings → Users', 'warn'); return; }
       if(items[i].label === 'Notification preferences'){ closeMenus(); showNotificationPrefsModal(); return; }
+      if(items[i].label === 'Accent Color'){ closeMenus(); showAccentColorModal(); return; }
       if(items[i].label === 'Trust This Device'){ closeMenus(); showTrustDeviceModal(); return; }
       if(items[i].label === 'Manage Trusted Devices'){ closeMenus(); showManageDevicesModal(); return; }
       toast(items[i].label, items[i].danger ? 'danger' : 'success');
