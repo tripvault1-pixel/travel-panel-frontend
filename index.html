@@ -2095,6 +2095,8 @@ function mapPendingRow(row){
     flightDuration: row.flight_duration,
     depDate: row.dep_date, depTime: row.dep_time, depTz: row.dep_tz,
     arrDate: row.arr_date, arrTime: row.arr_time, arrTz: row.arr_tz,
+    hotel_website: row.hotel_website,
+    escalation_reason: row.escalation_reason,
     passengers: (row.passengers && row.passengers.length) ? row.passengers : [{ name: row.customer, gender: 'Not on file', dob: row.dob || 'Not on file' }],
   };
 }
@@ -2291,6 +2293,8 @@ function escalatedRowHTML(b){
     <td>
       <div class="row-actions">
         <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}', escalatedData)"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon" title="Edit booking / add confirmation" onclick="showEditBookingModal('${b.id}', 'escalated')"><svg class="icon"><use href="#i-edit"/></svg></div>
+        ${b.confirmationNumber ? `<div class="action-icon good" title="Mark booking complete" onclick="showMarkCompleteModal('${b.id}', 'escalated')"><svg class="icon"><use href="#i-check"/></svg></div>` : ''}
         <div class="action-icon good" title="Return to Pending" onclick="returnToPending('${b.id}')"><svg class="icon"><use href="#i-clock"/></svg></div>
       </div>
     </td>
@@ -2996,8 +3000,9 @@ async function flagBookingForFraud(id){
   }
 }
 
-function showMarkCompleteModal(id){
-  const b = pendingData.find(x => x.id === id);
+function showMarkCompleteModal(id, source){
+  source = source || 'pending';
+  const b = (source === 'escalated' ? escalatedData : pendingData).find(x => x.id === id);
   if(!b) return;
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
@@ -3005,7 +3010,7 @@ function showMarkCompleteModal(id){
     <div class="modal-box">
       <div class="modal-icon" style="background:var(--green-dim); color:var(--green);"><svg class="icon"><use href="#i-check"/></svg></div>
       <h3>Mark ${b.id} complete?</h3>
-      <p>${b.customer}'s booking to ${b.dest} will move from Pending Bookings into Completed Bookings using confirmation ${b.confirmationNumber}.</p>
+      <p>${b.customer}'s booking to ${b.dest} will move from ${source === 'escalated' ? 'Escalated' : 'Pending'} Bookings into Completed Bookings using confirmation ${b.confirmationNumber}.</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="mcCancel">Go back</button>
         <button class="btn btn-primary" id="mcConfirm">Mark Complete</button>
@@ -3016,8 +3021,12 @@ function showMarkCompleteModal(id){
   root.addEventListener('click', e => { if(e.target === root) root.remove(); });
   root.querySelector('#mcConfirm').onclick = async () => {
     try {
-      await apiFetch(`/bookings/pending/${id}/complete`, { method: 'POST' });
-      await Promise.all([loadPendingPage(currentPage.pending), loadCompletedPage(1), loadDashboardStats()]);
+      await apiFetch(`/bookings/${source}/${id}/complete`, { method: 'POST' });
+      if(source === 'escalated'){
+        await Promise.all([loadEscalatedPage(currentPage.escalated), loadCompletedPage(1), loadDashboardStats()]);
+      } else {
+        await Promise.all([loadPendingPage(currentPage.pending), loadCompletedPage(1), loadDashboardStats()]);
+      }
       root.remove();
       toast(id + ' marked complete');
     } catch(err) {
@@ -3052,17 +3061,19 @@ function showFlagFraudModal(id){
   };
 }
 
-function showEditBookingModal(id){
-  const b = pendingData.find(x => x.id === id);
+function showEditBookingModal(id, source){
+  source = source || 'pending';
+  const b = (source === 'escalated' ? escalatedData : pendingData).find(x => x.id === id);
   if(!b) return;
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
   document.body.appendChild(root);
   root.addEventListener('click', e => { if(e.target === root) root.remove(); });
-  renderEditStep(root, b);
+  renderEditStep(root, b, source);
 }
 
-function renderEditStep(root, b){
+function renderEditStep(root, b, source){
+  source = source || 'pending';
   root.innerHTML = `
     <div class="modal-box" style="width:440px;">
       <div class="modal-icon"><svg class="icon"><use href="#i-edit"/></svg></div>
@@ -3082,11 +3093,17 @@ function renderEditStep(root, b){
     const val = document.getElementById('editConfNum').value.trim().toUpperCase();
     if(!val){ toast('Enter a confirmation number or record locator', 'warn'); return; }
     try {
-      await apiFetch(`/bookings/pending/${b.id}`, { method: 'PATCH', body: JSON.stringify({ confirmationNumber: val }) });
+      await apiFetch(`/bookings/${source}/${b.id}`, { method: 'PATCH', body: JSON.stringify({ confirmationNumber: val }) });
       b.confirmationNumber = val;
-      await loadPendingPage(currentPage.pending);
-      toast('Confirmation number saved for ' + b.id);
-      renderEmailStep(root, b);
+      if(source === 'escalated'){
+        await loadEscalatedPage(currentPage.escalated);
+        toast('Confirmation number saved for ' + b.id);
+        root.remove();
+      } else {
+        await loadPendingPage(currentPage.pending);
+        toast('Confirmation number saved for ' + b.id);
+        renderEmailStep(root, b);
+      }
     } catch(err) {
       toast(err.message, 'danger');
     }
