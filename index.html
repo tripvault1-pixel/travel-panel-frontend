@@ -558,6 +558,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
 
     <div class="nav-group-label">Bookings</div>
     <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count" id="navPendingBadge">24</span></a>
+    <a class="nav-item" data-page="escalated"><svg class="icon"><use href="#i-alert"/></svg><span class="label">Escalated Bookings</span><span class="badge-count" id="navEscalatedBadge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">0</span></a>
     <a class="nav-item" data-page="completed" id="navCompleted"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
 
     <div class="nav-group-label">Security</div>
@@ -765,6 +766,47 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
           <div class="table-footer">
             <span class="footer-note" id="pendingFooterNote">Showing 1–5 of 24 results</span>
             <div class="pagination" id="pendingPagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 2b: ESCALATED BOOKINGS -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-escalated">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-alert"/></svg> Bookings</div>
+            <div class="page-title">Escalated Bookings</div>
+            <div class="page-sub">On hold, awaiting supervisor or specialist follow-up</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="toolbar-search"><svg class="icon" style="width:14px;height:14px;color:var(--text-faint)"><use href="#i-search"/></svg><input id="escalatedSearchInput" placeholder="Search by customer, booking ID..." oninput="handleTableSearch('escalated', this.value)"></div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortable" onclick="sortToggle(this)">Booking ID</th>
+                  <th class="sortable" onclick="sortToggle(this)">Customer</th>
+                  <th>Destination</th>
+                  <th>Travel Dates</th>
+                  <th>Airline / Hotel</th>
+                  <th class="sortable" onclick="sortToggle(this)">Amount</th>
+                  <th>Payment</th>
+                  <th>Escalation Reason</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="escalatedTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="footer-note" id="escalatedFooterNote">Showing 0–0 of 0 results</span>
+            <div class="pagination" id="escalatedPagination"></div>
           </div>
         </div>
       </section>
@@ -1455,6 +1497,7 @@ async function bootstrapApp(){
   try {
     const tasks = [
       loadPendingPage(1),
+      loadEscalatedPage(1),
       loadDashboardStats(),
       loadProfile(),
     ];
@@ -2088,7 +2131,7 @@ const statusLabel = s => ({pending:'Pending', review:'In Review'}[s]);
    PAGINATION (shared across Pending / Completed / Fraud tables)
 ============================================================ */
 const PAGE_SIZE = 5;
-const currentPage = { pending: 1, completed: 1, fraud: 1 };
+const currentPage = { pending: 1, completed: 1, fraud: 1, escalated: 1 };
 
 function pageSlice(data, page){
   const start = (page - 1) * PAGE_SIZE;
@@ -2117,15 +2160,16 @@ function renderPagination(key, total, rerenderFn, noun){
   wrap.dataset.rerender = key;
 }
 
-let pendingTotal = 0, completedTotal = 0, fraudTotal = 0;
+let pendingTotal = 0, completedTotal = 0, fraudTotal = 0, escalatedTotal = 0;
 
 async function goToPage(key, n){
-  const totalMap = { pending: pendingTotal, completed: completedTotal, fraud: fraudTotal };
+  const totalMap = { pending: pendingTotal, completed: completedTotal, fraud: fraudTotal, escalated: escalatedTotal };
   const totalPages = Math.max(1, Math.ceil(totalMap[key] / PAGE_SIZE));
   if(n < 1 || n > totalPages) return;
   if(key === 'pending') await loadPendingPage(n);
   else if(key === 'completed') await loadCompletedPage(n);
   else if(key === 'fraud') await loadFraudPage(n);
+  else if(key === 'escalated') await loadEscalatedPage(n);
   const section = document.getElementById('page-' + key);
   if(section) section.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
@@ -2153,6 +2197,7 @@ function pendingRowHTML(b, idx){
         ${b.confirmationNumber ? `<div class="action-icon ${b.emailSent?'good':'warn'}" title="${b.emailSent?'Resend confirmation email':'Build/Send confirmation email'}" onclick="showEmailModal('${b.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>` : ''}
         ${b.confirmationNumber ? `<div class="action-icon good" title="Mark booking complete" onclick="showMarkCompleteModal('${b.id}')"><svg class="icon"><use href="#i-check"/></svg></div>` : ''}
         <div class="action-icon warn" title="Flag for fraud review" onclick="showFlagFraudModal('${b.id}')"><svg class="icon"><use href="#i-flag"/></svg></div>
+        <div class="action-icon" style="color:var(--amber, #f59e0b);" title="Hold / Escalate booking" onclick="showEscalateModal('${b.id}')"><svg class="icon"><use href="#i-alert"/></svg></div>
         <div class="action-icon danger" title="Cancel booking" onclick="showModal('cancel','${b.id}')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
       </div>
     </td>
@@ -2163,6 +2208,7 @@ const tableQuery = {
   pending: { sortBy: 'created', sortDir: 'desc', q: '' },
   completed: { sortBy: 'done', sortDir: 'desc', q: '' },
   fraud: { q: '' },
+  escalated: { sortBy: 'created', sortDir: 'desc', q: '' },
 };
 
 let searchDebounceTO = null;
@@ -2173,6 +2219,7 @@ function handleTableSearch(tableKey, value){
     if(tableKey === 'pending') loadPendingPage(1);
     else if(tableKey === 'completed') loadCompletedPage(1);
     else if(tableKey === 'fraud') loadFraudPage(1);
+    else if(tableKey === 'escalated') loadEscalatedPage(1);
   }, 350);
 }
 
@@ -2209,6 +2256,103 @@ function renderPendingTable(){
     tbody.innerHTML = pendingData.map((b,idx)=>pendingRowHTML(b,idx)).join('');
   }
   renderPagination('pending', pendingTotal, null, 'results');
+}
+
+/* ---- Escalated Bookings ---- */
+let escalatedData = [];
+
+async function loadEscalatedPage(page){
+  try {
+    const t = tableQuery.escalated;
+    const params = new URLSearchParams({ page, pageSize: PAGE_SIZE, sortBy: t.sortBy, sortDir: t.sortDir, q: t.q });
+    const data = await apiFetch(`/bookings/escalated?${params}`);
+    escalatedData = data.bookings.map(mapPendingRow);
+    escalatedTotal = data.total;
+    currentPage.escalated = data.page;
+    renderEscalatedTable();
+    const badge = document.getElementById('navEscalatedBadge');
+    if(badge) badge.textContent = escalatedTotal;
+  } catch(err) {
+    toast('Failed to load escalated bookings: ' + err.message, 'danger');
+  }
+}
+
+function escalatedRowHTML(b){
+  return `
+  <tr>
+    <td class="cell-mono cell-strong">${b.id}${b.confirmationNumber?`<div class="cell-sub">PNR: ${b.confirmationNumber}</div>`:''}</td>
+    <td><div class="cust-cell hoverable-name" onmouseenter="showBillingTip(this,'${b.id}','escalated')" onmouseleave="hideBillingTip()"><div class="cust-avatar">${initials(b.customer)}</div>${b.customer}</div></td>
+    <td>${b.dest}</td>
+    <td class="cell-mono">${b.dates}</td>
+    <td>${b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
+    <td class="cell-strong">$${b.amount.toLocaleString()}</td>
+    <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
+    <td class="cell-sub">${b.escalation_reason || 'Escalated by agent'}</td>
+    <td>
+      <div class="row-actions">
+        <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}', escalatedData)"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon good" title="Return to Pending" onclick="returnToPending('${b.id}')"><svg class="icon"><use href="#i-clock"/></svg></div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function renderEscalatedTable(){
+  const tbody = document.getElementById('escalatedTableBody');
+  if(!tbody) return;
+  if(escalatedData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><svg class="icon" style="width:38px;height:38px;margin-bottom:12px;opacity:.5"><use href="#i-empty"/></svg><b>No escalated bookings</b><div>Bookings put on hold will show up here.</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = escalatedData.map(b=>escalatedRowHTML(b)).join('');
+  }
+  renderPagination('escalated', escalatedTotal, null, 'results');
+}
+
+function showEscalateModal(id){
+  const b = pendingData.find(x => x.id === id);
+  if(!b) return;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-icon" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);"><svg class="icon"><use href="#i-alert"/></svg></div>
+      <h3>Escalate ${b.id}?</h3>
+      <p>${b.customer}'s booking to ${b.dest} will be put on hold and moved from Pending Bookings into Escalated Bookings.</p>
+      <label style="display:block; font-size:12.5px; color:var(--text-dim); margin:14px 0 6px;">Reason (optional)</label>
+      <input type="text" id="escalateReason" class="form-input" placeholder="e.g. Needs supervisor review" style="width:100%;">
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="escCancel">Go back</button>
+        <button class="btn" style="background:var(--amber, #f59e0b); border-color:transparent; color:#1a1200;" id="escConfirm">Escalate Booking</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#escCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#escConfirm').onclick = async () => {
+    const reason = document.getElementById('escalateReason').value.trim();
+    try {
+      await apiFetch(`/bookings/pending/${id}/escalate`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || undefined, escalatedBy: currentUser ? currentUser.email : undefined }),
+      });
+      await Promise.all([loadPendingPage(currentPage.pending), loadEscalatedPage(1), loadDashboardStats()]);
+      root.remove();
+      toast(id + ' escalated — moved to Escalated Bookings', 'warn');
+    } catch(err) {
+      root.remove();
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+async function returnToPending(id){
+  try {
+    await apiFetch(`/bookings/escalated/${id}/return`, { method: 'POST' });
+    await Promise.all([loadEscalatedPage(currentPage.escalated), loadPendingPage(1), loadDashboardStats()]);
+    toast(id + ' returned to Pending Bookings');
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
 }
 
 /* ---- Completed Bookings ---- */
@@ -2844,7 +2988,7 @@ async function flagBookingForFraud(id){
       method: 'POST',
       body: JSON.stringify({ ip: randomIP(), device: randomFingerprint() }),
     });
-    await Promise.all([loadPendingPage(1), loadFraudPage(1), loadDashboardStats()]);
+    await Promise.all([loadPendingPage(currentPage.pending), loadFraudPage(1), loadDashboardStats()]);
     return true;
   } catch(err) {
     toast(err.message, 'danger');
@@ -2873,7 +3017,7 @@ function showMarkCompleteModal(id){
   root.querySelector('#mcConfirm').onclick = async () => {
     try {
       await apiFetch(`/bookings/pending/${id}/complete`, { method: 'POST' });
-      await Promise.all([loadPendingPage(1), loadCompletedPage(1), loadDashboardStats()]);
+      await Promise.all([loadPendingPage(currentPage.pending), loadCompletedPage(1), loadDashboardStats()]);
       root.remove();
       toast(id + ' marked complete');
     } catch(err) {
@@ -3051,8 +3195,8 @@ function isCarRental(b){
   return !!b.vendor && CAR_RENTAL_VENDORS.some(v => b.vendor.includes(v));
 }
 
-function showBookingDetail(id){
-  const b = pendingData.find(x=>x.id===id);
+function showBookingDetail(id, dataSource){
+  const b = (dataSource || pendingData).find(x=>x.id===id);
   if(!b) return;
   const parts = b.customer.split(' ');
   const firstName = parts[0];
@@ -3279,12 +3423,13 @@ function menu(el, items){
 const SORT_LABEL_MAP = {
   pending: { 'Booking ID': 'id', 'Customer': 'customer', 'Amount': 'amount' },
   completed: { 'Booking ID': 'id', 'Total Paid': 'paid' },
+  escalated: { 'Booking ID': 'id', 'Customer': 'customer', 'Amount': 'amount' },
 };
 
 function sortToggle(th){
   const table = th.closest('table');
   const tbody = table.querySelector('tbody');
-  const tableKey = tbody && tbody.id === 'pendingTableBody' ? 'pending' : tbody && tbody.id === 'completedTableBody' ? 'completed' : null;
+  const tableKey = tbody && tbody.id === 'pendingTableBody' ? 'pending' : tbody && tbody.id === 'completedTableBody' ? 'completed' : tbody && tbody.id === 'escalatedTableBody' ? 'escalated' : null;
   if(!tableKey) return;
 
   table.querySelectorAll('th.sortable').forEach(t=>{ if(t!==th){ t.classList.remove('sort-asc','sort-desc'); } });
@@ -3302,12 +3447,13 @@ function sortToggle(th){
     t.sortBy = sortByKey;
     t.sortDir = dir;
   } else {
-    t.sortBy = tableKey === 'pending' ? 'created' : 'done';
+    t.sortBy = tableKey === 'completed' ? 'done' : 'created';
     t.sortDir = 'desc';
   }
 
   toast(dir ? `Sorted by ${label} (${dir === 'asc' ? 'ascending' : 'descending'})` : `Sort cleared on ${label}`);
   if(tableKey === 'pending') loadPendingPage(1);
+  else if(tableKey === 'escalated') loadEscalatedPage(1);
   else loadCompletedPage(1);
 }
 
