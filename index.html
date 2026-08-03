@@ -2593,9 +2593,10 @@ function escalatedRowHTML(b){
     <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
     <td class="cell-sub">${b.escalation_reason || 'Escalated by agent'}</td>
     <td>
-      <div class="row-actions">
+      <div class="row-actions" style="position:relative;">
         <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}', escalatedData)"><svg class="icon"><use href="#i-eye"/></svg></div>
         <div class="action-icon" title="Edit booking / add confirmation" onclick="showEditBookingModal('${b.id}', 'escalated')"><svg class="icon"><use href="#i-edit"/></svg></div>
+        <div class="action-icon" title="Email customer" onclick="toggleEmailReasonMenu(event, '${b.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>
         ${b.confirmationNumber ? `<div class="action-icon good" title="Mark booking complete" onclick="showMarkCompleteModal('${b.id}', 'escalated')"><svg class="icon"><use href="#i-check"/></svg></div>` : ''}
         <div class="action-icon good" title="Return to Pending" onclick="returnToPending('${b.id}')"><svg class="icon"><use href="#i-clock"/></svg></div>
       </div>
@@ -3460,6 +3461,99 @@ function renderEmailStep(root, b){
       await Promise.all([loadPendingPage(currentPage.pending), loadDashboardStats()]);
       root.remove();
       toast('Confirmation email sent to ' + b.email);
+    } catch(err) {
+      btn.disabled = false; btn.textContent = 'Send Email';
+      toast(err.message, 'danger');
+    }
+  };
+}
+
+/* ---- Escalated Bookings: pre-filled unavailability emails ---- */
+const EMAIL_REASON_TEMPLATES = {
+  'Sold Out': function(b){
+    return {
+      subject: `Update on your ${b.vendor} booking to ${b.dest} — ${b.id}`,
+      body: `Hi ${b.customer.split(' ')[0]},\n\nWe're reaching out about your booking (${b.id}) to ${b.dest} with ${b.vendor}. Unfortunately, this option has sold out since your request came in and is no longer available.\n\nWe're already looking into comparable alternatives for you and will follow up shortly with next steps. We're sorry for the inconvenience and appreciate your patience.\n\nIf you have any questions in the meantime, just reply to this email.\n\nBest,\nTripWiz Travel Team`
+    };
+  },
+  'Room Not Available': function(b){
+    return {
+      subject: `Update on your ${b.vendor} booking to ${b.dest} — ${b.id}`,
+      body: `Hi ${b.customer.split(' ')[0]},\n\nWe're reaching out about your booking (${b.id}) to ${b.dest} with ${b.vendor}. Unfortunately, the requested room type is no longer available for your selected dates.\n\nWe're currently checking for comparable alternatives at the same property (or nearby) and will follow up shortly with options. We're sorry for any inconvenience this causes.\n\nIf you have any questions in the meantime, just reply to this email.\n\nBest,\nTripWiz Travel Team`
+    };
+  }
+};
+
+function toggleEmailReasonMenu(event, id){
+  event.stopPropagation();
+  document.querySelectorAll('.email-reason-menu').forEach(m => m.remove());
+  const anchor = event.currentTarget;
+  const menu = document.createElement('div');
+  menu.className = 'email-reason-menu';
+  menu.style.cssText = 'position:absolute; top:calc(100% + 4px); right:0; z-index:60; background:var(--surface-2); border:1px solid var(--border-strong); border-radius:var(--radius-sm); box-shadow:0 12px 24px -8px rgba(0,0,0,0.5); min-width:170px; padding:4px; text-align:left;';
+  menu.innerHTML = Object.keys(EMAIL_REASON_TEMPLATES).map(reason => `
+    <div class="email-reason-item" style="padding:8px 10px; font-size:12.5px; border-radius:6px; cursor:pointer; color:var(--text);" data-reason="${reason}">${reason}</div>
+  `).join('');
+  anchor.parentElement.appendChild(menu);
+  menu.querySelectorAll('.email-reason-item').forEach(item => {
+    item.onmouseover = () => item.style.background = 'var(--surface-hover)';
+    item.onmouseout = () => item.style.background = 'transparent';
+    item.onclick = (e) => {
+      e.stopPropagation();
+      menu.remove();
+      showEscalatedEmailModal(id, item.dataset.reason);
+    };
+  });
+  const closeOnOutsideClick = (e) => {
+    if(!menu.contains(e.target)){
+      menu.remove();
+      document.removeEventListener('click', closeOnOutsideClick);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeOnOutsideClick), 0);
+}
+
+function showEscalatedEmailModal(id, reason){
+  const b = escalatedData.find(x => x.id === id);
+  if(!b) return;
+  if(!b.email){ toast('This booking has no email on file', 'warn'); return; }
+  const template = EMAIL_REASON_TEMPLATES[reason](b);
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box" style="width:460px;">
+      <div class="modal-icon" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);"><svg class="icon"><use href="#i-mail"/></svg></div>
+      <h3>${reason} — ${b.id}</h3>
+      <p>Review and send this notice to ${b.customer}.</p>
+      <div style="margin-bottom:12px;">
+        <div class="detail-label" style="margin-bottom:5px;">To</div>
+        <div class="detail-value cell-mono" style="background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px;">${b.email}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="detail-label" style="margin-bottom:5px;">Subject</div>
+        <input id="escEmailSubject" type="text" value="${template.subject.replace(/"/g,'&quot;')}" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:13px;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <div class="detail-label" style="margin-bottom:5px;">Message</div>
+        <textarea id="escEmailBody" rows="9" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-size:12.5px; font-family:var(--font-body); line-height:1.5; resize:vertical;">${template.body}</textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="escEmailClose">Close</button>
+        <button class="btn btn-primary" id="escEmailSend">Send Email</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#escEmailClose').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#escEmailSend').onclick = async () => {
+    const btn = root.querySelector('#escEmailSend');
+    const subject = document.getElementById('escEmailSubject').value;
+    const body = document.getElementById('escEmailBody').value;
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await apiFetch(`/bookings/escalated/${id}/notify-email`, { method: 'POST', body: JSON.stringify({ subject, body, reason }) });
+      root.remove();
+      toast(reason + ' email sent to ' + b.email);
     } catch(err) {
       btn.disabled = false; btn.textContent = 'Send Email';
       toast(err.message, 'danger');
