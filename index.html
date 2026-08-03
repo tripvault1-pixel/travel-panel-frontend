@@ -3473,13 +3473,13 @@ const EMAIL_REASON_TEMPLATES = {
   'Sold Out': function(b){
     return {
       subject: `Update on your ${b.vendor} booking to ${b.dest} — ${b.id}`,
-      body: `Hi ${b.customer.split(' ')[0]},\n\nWe're reaching out about your booking (${b.id}) to ${b.dest} with ${b.vendor}. Unfortunately, this option has sold out since your request came in and is no longer available.\n\nWe're already looking into comparable alternatives for you and will follow up shortly with next steps. We're sorry for the inconvenience and appreciate your patience.\n\nIf you have any questions in the meantime, just reply to this email.\n\nBest,\nTripWiz Travel Team`
+      body: `Hi ${b.customer.split(' ')[0]},\n\nWe're reaching out about your booking (${b.id}) to ${b.dest} with ${b.vendor}. Unfortunately, this option has sold out since your request came in and is no longer available.\n\nWe'd like to offer you one of the following options:\n\n1. Relocation to a comparable or upgraded hotel in the same area, at no additional cost to you.\n2. A full refund for this booking.\n\nPlease let us know which option you'd prefer, and we'll take care of it right away. We're sorry for the inconvenience and appreciate your patience.\n\nIf you have any questions in the meantime, just reply to this email.\n\nBest,\nTripWiz Travel Team`
     };
   },
   'Room Not Available': function(b){
     return {
       subject: `Update on your ${b.vendor} booking to ${b.dest} — ${b.id}`,
-      body: `Hi ${b.customer.split(' ')[0]},\n\nWe're reaching out about your booking (${b.id}) to ${b.dest} with ${b.vendor}. Unfortunately, the requested room type is no longer available for your selected dates.\n\nWe're currently checking for comparable alternatives at the same property (or nearby) and will follow up shortly with options. We're sorry for any inconvenience this causes.\n\nIf you have any questions in the meantime, just reply to this email.\n\nBest,\nTripWiz Travel Team`
+      body: `Hi ${b.customer.split(' ')[0]},\n\nWe're reaching out about your booking (${b.id}) to ${b.dest} with ${b.vendor}. Unfortunately, the requested room type is no longer available for your selected dates.\n\nWe'd like to offer you one of the following options:\n\n1. A similar room, or an upgraded room at the same property, at no additional cost to you.\n2. A full refund for this booking.\n\nPlease let us know which option you'd prefer, and we'll take care of it right away. We're sorry for any inconvenience this causes.\n\nIf you have any questions in the meantime, just reply to this email.\n\nBest,\nTripWiz Travel Team`
     };
   }
 };
