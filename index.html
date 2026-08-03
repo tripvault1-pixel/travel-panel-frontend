@@ -2599,6 +2599,7 @@ function escalatedRowHTML(b){
         <div class="action-icon" title="Email customer" onclick="toggleEmailReasonMenu(event, '${b.id}')"><svg class="icon"><use href="#i-mail"/></svg></div>
         ${b.confirmationNumber ? `<div class="action-icon good" title="Mark booking complete" onclick="showMarkCompleteModal('${b.id}', 'escalated')"><svg class="icon"><use href="#i-check"/></svg></div>` : ''}
         <div class="action-icon good" title="Return to Pending" onclick="returnToPending('${b.id}')"><svg class="icon"><use href="#i-clock"/></svg></div>
+        <div class="action-icon danger" title="Cancel booking" onclick="showModal('cancel','${b.id}','escalated')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
       </div>
     </td>
   </tr>`;
@@ -3709,7 +3710,8 @@ function showBookingDetail(id, dataSource){
   root.querySelector('#detailVCC').onclick = ()=>{ root.remove(); showVCCModal(b.id, b.amount, b.vendor, b.pay); };
 }
 
-function showModal(kind, id){
+function showModal(kind, id, source){
+  source = source || 'pending';
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
   let title, body, confirmLabel, confirmStyle, iconRef, msg;
@@ -3733,8 +3735,12 @@ function showModal(kind, id){
   root.querySelector('#modalConfirm').onclick = async ()=>{
     if(kind === 'cancel'){
       try {
-        await apiFetch(`/bookings/pending/${id}`, { method: 'DELETE' });
-        await loadPendingPage(currentPage.pending);
+        await apiFetch(`/bookings/${source}/${id}`, { method: 'DELETE' });
+        if(source === 'escalated'){
+          await loadEscalatedPage(currentPage.escalated);
+        } else {
+          await loadPendingPage(currentPage.pending);
+        }
         loadDashboardStats();
         root.remove();
         toast(msg, 'danger');
