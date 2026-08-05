@@ -2639,17 +2639,27 @@ async function loadEmailQueuePage(page){
     emailQueueTotal = data.total;
     renderEmailQueueTable();
     const badge = document.getElementById('navEmailQueueBadge');
-    const queuedCount = emailQueueData.filter(e => e.status === 'queued').length;
+    const queuedCount = emailQueueData.filter(e => e.status !== 'sent').length;
     if(badge) badge.textContent = queuedCount;
   } catch(err) {
     console.warn('Failed to load email queue:', err.message);
   }
 }
 
+const EMAIL_STAGE_LABELS = {
+  queued: 'Queued',
+  building: 'Building Email',
+  adding_images: 'Adding Image Lining',
+  formatting: 'Formatting Details',
+  sending: 'Sending',
+  sent: 'Sent',
+};
+
 function emailQueueRowHTML(e){
+  const label = EMAIL_STAGE_LABELS[e.status] || e.status;
   const statusBadge = e.status === 'sent'
-    ? `<span class="badge" style="background:var(--green-dim); color:var(--green);">Sent</span>`
-    : `<span class="badge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">Queued</span>`;
+    ? `<span class="badge" style="background:var(--green-dim); color:var(--green);">${label}</span>`
+    : `<span class="badge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">${label}</span>`;
   const queuedAt = e.created_at ? new Date(e.created_at + 'Z').toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—';
   const sentAt = e.sent_at ? new Date(e.sent_at + 'Z').toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—';
   return `
