@@ -2759,7 +2759,6 @@ function customerReplyRowHTML(b){
   const badgeStyle = replyStatus === 'awaiting_reply'
     ? 'background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);'
     : 'background:var(--green-dim); color:var(--green);';
-  const options = Object.keys(CUSTOMER_REPLY_LABELS).map(key => `<option value="${key}" ${key===replyStatus?'selected':''}>${CUSTOMER_REPLY_LABELS[key]}</option>`).join('');
   return `
   <tr>
     <td class="cell-mono cell-strong">${b.id}</td>
@@ -2768,11 +2767,7 @@ function customerReplyRowHTML(b){
     <td>${b.vendor}</td>
     <td class="cell-strong">$${b.amount.toLocaleString()}</td>
     <td class="cell-sub">${b.escalation_reason || '—'}</td>
-    <td>
-      <select onchange="setCustomerReplyStatus('${b.id}', this.value)" style="background:${replyStatus==='awaiting_reply' ? 'var(--amber-dim, rgba(245,158,11,.15))' : 'var(--green-dim)'}; color:${replyStatus==='awaiting_reply' ? 'var(--amber, #f59e0b)' : 'var(--green)'}; border:1px solid var(--border-strong); border-radius:6px; padding:4px 8px; font-size:12px; font-weight:600;">
-        ${options}
-      </select>
-    </td>
+    <td><span class="badge" style="${badgeStyle}">${label}</span></td>
     <td>
       <div class="row-actions">
         <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}', customerReplyData)"><svg class="icon"><use href="#i-eye"/></svg></div>
@@ -2792,16 +2787,6 @@ function renderCustomerReplyTable(){
   }
   const note = document.getElementById('customerReplyFooterNote');
   if(note) note.textContent = `Showing ${customerReplyData.length} of ${customerReplyTotal} results`;
-}
-
-async function setCustomerReplyStatus(id, replyStatus){
-  try {
-    await apiFetch(`/bookings/customer-reply/${id}/reply`, { method: 'PATCH', body: JSON.stringify({ replyStatus }) });
-    toast(id + ' — customer reply set to ' + (CUSTOMER_REPLY_LABELS[replyStatus] || replyStatus));
-    loadCustomerReplyPage(1);
-  } catch(err) {
-    toast(err.message, 'danger');
-  }
 }
 
 function escalatedRowHTML(b){
