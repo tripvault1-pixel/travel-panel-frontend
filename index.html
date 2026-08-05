@@ -638,6 +638,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
     <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count" id="navPendingBadge">24</span></a>
     <a class="nav-item" data-page="escalated"><svg class="icon"><use href="#i-alert"/></svg><span class="label">Escalated Bookings</span><span class="badge-count" id="navEscalatedBadge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">0</span></a>
     <a class="nav-item" data-page="emailqueue"><svg class="icon"><use href="#i-mail"/></svg><span class="label">Email Queue</span><span class="badge-count" id="navEmailQueueBadge">0</span></a>
+    <a class="nav-item" data-page="customerreply"><svg class="icon"><use href="#i-mail"/></svg><span class="label">Customer Reply</span><span class="badge-count" id="navCustomerReplyBadge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">0</span></a>
     <a class="nav-item" data-page="completed" id="navCompleted"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
 
     <div class="nav-group-label">Security</div>
@@ -972,6 +973,43 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
           <div class="table-footer">
             <span class="footer-note" id="emailQueueFooterNote">Showing 0–0 of 0 results</span>
             <div class="pagination" id="emailQueuePagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 2d: CUSTOMER REPLY -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-customerreply">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-mail"/></svg> Communications</div>
+            <div class="page-title">Customer Reply</div>
+            <div class="page-sub">Awaiting the customer's choice after a notice email was delivered</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Customer</th>
+                  <th>Destination</th>
+                  <th>Vendor</th>
+                  <th>Amount</th>
+                  <th>Reason</th>
+                  <th>Customer Reply</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customerReplyTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="footer-note" id="customerReplyFooterNote">Showing 0–0 of 0 results</span>
+            <div class="pagination" id="customerReplyPagination"></div>
           </div>
         </div>
       </section>
@@ -1379,7 +1417,7 @@ async function attemptLogin(){
     updateProfileUI(currentUser);
     await bootstrapApp();
     if(!window._emailQueuePoll){
-      window._emailQueuePoll = setInterval(() => loadEmailQueuePage(1), 15000);
+      window._emailQueuePoll = setInterval(() => { loadEmailQueuePage(1); loadCustomerReplyPage(1); }, 15000);
     }
   } catch(err) {
     errEl.textContent = err.status === 429 ? 'Too many attempts — try again in a few minutes.' : (err.message || 'Invalid email or password.');
@@ -1841,6 +1879,7 @@ async function bootstrapApp(){
       loadPendingPage(1),
       loadEscalatedPage(1),
       loadEmailQueuePage(1),
+      loadCustomerReplyPage(1),
       loadDashboardStats(),
       loadProfile(),
     ];
@@ -2098,7 +2137,7 @@ async function initAuthGate(){
       updateProfileUI(currentUser);
       await bootstrapApp();
       if(!window._emailQueuePoll){
-        window._emailQueuePoll = setInterval(() => loadEmailQueuePage(1), 15000);
+        window._emailQueuePoll = setInterval(() => { loadEmailQueuePage(1); loadCustomerReplyPage(1); }, 15000);
       }
       return;
     } catch(err) {
@@ -2444,6 +2483,7 @@ function mapPendingRow(row){
     hotel_website: row.hotel_website,
     hotel_address: row.hotel_address,
     escalation_reason: row.escalation_reason,
+    reply_status: row.reply_status,
     passengers: (row.passengers && row.passengers.length) ? row.passengers : [{ name: row.customer, gender: 'Not on file', dob: row.dob || 'Not on file' }],
   };
 }
@@ -2685,6 +2725,83 @@ function renderEmailQueueTable(){
   }
   const note = document.getElementById('emailQueueFooterNote');
   if(note) note.textContent = `Showing ${emailQueueData.length} of ${emailQueueTotal} results`;
+}
+
+/* ---- Customer Reply ---- */
+let customerReplyData = [];
+let customerReplyTotal = 0;
+
+const CUSTOMER_REPLY_LABELS = {
+  awaiting_reply: 'Awaiting Reply',
+  relocate: 'Relocate',
+  different_room: 'Different Room Type',
+  refund: 'Refund',
+};
+
+async function loadCustomerReplyPage(page){
+  try {
+    const params = new URLSearchParams({ page: page || 1, pageSize: PAGE_SIZE });
+    const data = await apiFetch(`/bookings/customer-reply?${params}`);
+    customerReplyData = data.bookings.map(mapPendingRow);
+    customerReplyTotal = data.total;
+    renderCustomerReplyTable();
+    const badge = document.getElementById('navCustomerReplyBadge');
+    const awaitingCount = customerReplyData.filter(b => (b.reply_status || 'awaiting_reply') === 'awaiting_reply').length;
+    if(badge) badge.textContent = awaitingCount;
+  } catch(err) {
+    console.warn('Failed to load customer reply queue:', err.message);
+  }
+}
+
+function customerReplyRowHTML(b){
+  const replyStatus = b.reply_status || 'awaiting_reply';
+  const label = CUSTOMER_REPLY_LABELS[replyStatus] || replyStatus;
+  const badgeStyle = replyStatus === 'awaiting_reply'
+    ? 'background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);'
+    : 'background:var(--green-dim); color:var(--green);';
+  const options = Object.keys(CUSTOMER_REPLY_LABELS).map(key => `<option value="${key}" ${key===replyStatus?'selected':''}>${CUSTOMER_REPLY_LABELS[key]}</option>`).join('');
+  return `
+  <tr>
+    <td class="cell-mono cell-strong">${b.id}</td>
+    <td>${b.customer}</td>
+    <td>${b.dest}</td>
+    <td>${b.vendor}</td>
+    <td class="cell-strong">$${b.amount.toLocaleString()}</td>
+    <td class="cell-sub">${b.escalation_reason || '—'}</td>
+    <td>
+      <select onchange="setCustomerReplyStatus('${b.id}', this.value)" style="background:${replyStatus==='awaiting_reply' ? 'var(--amber-dim, rgba(245,158,11,.15))' : 'var(--green-dim)'}; color:${replyStatus==='awaiting_reply' ? 'var(--amber, #f59e0b)' : 'var(--green)'}; border:1px solid var(--border-strong); border-radius:6px; padding:4px 8px; font-size:12px; font-weight:600;">
+        ${options}
+      </select>
+    </td>
+    <td>
+      <div class="row-actions">
+        <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}', customerReplyData)"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon danger" title="Cancel booking" onclick="showModal('cancel','${b.id}','customer-reply')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function renderCustomerReplyTable(){
+  const tbody = document.getElementById('customerReplyTableBody');
+  if(!tbody) return;
+  if(customerReplyData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><svg class="icon" style="width:38px;height:38px;margin-bottom:12px;opacity:.5"><use href="#i-empty"/></svg><b>No bookings awaiting reply</b><div>Bookings move here once their escalation notice email is fully delivered.</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = customerReplyData.map(b => customerReplyRowHTML(b)).join('');
+  }
+  const note = document.getElementById('customerReplyFooterNote');
+  if(note) note.textContent = `Showing ${customerReplyData.length} of ${customerReplyTotal} results`;
+}
+
+async function setCustomerReplyStatus(id, replyStatus){
+  try {
+    await apiFetch(`/bookings/customer-reply/${id}/reply`, { method: 'PATCH', body: JSON.stringify({ replyStatus }) });
+    toast(id + ' — customer reply set to ' + (CUSTOMER_REPLY_LABELS[replyStatus] || replyStatus));
+    loadCustomerReplyPage(1);
+  } catch(err) {
+    toast(err.message, 'danger');
+  }
 }
 
 function escalatedRowHTML(b){
@@ -3845,6 +3962,8 @@ function showModal(kind, id, source){
         await apiFetch(`/bookings/${source}/${id}`, { method: 'DELETE' });
         if(source === 'escalated'){
           await loadEscalatedPage(currentPage.escalated);
+        } else if(source === 'customer-reply'){
+          await loadCustomerReplyPage(1);
         } else {
           await loadPendingPage(currentPage.pending);
         }
