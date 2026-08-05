@@ -2771,6 +2771,7 @@ function customerReplyRowHTML(b){
     <td>
       <div class="row-actions">
         <div class="action-icon" title="View details" onclick="showBookingDetail('${b.id}', customerReplyData)"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <div class="action-icon good" title="Process refund" onclick="showRefundModal('${b.id}')"><svg class="icon"><use href="#i-card"/></svg></div>
         <div class="action-icon danger" title="Cancel booking" onclick="showModal('cancel','${b.id}','customer-reply')"><svg class="icon"><use href="#i-x-circle"/></svg></div>
       </div>
     </td>
@@ -2787,6 +2788,40 @@ function renderCustomerReplyTable(){
   }
   const note = document.getElementById('customerReplyFooterNote');
   if(note) note.textContent = `Showing ${customerReplyData.length} of ${customerReplyTotal} results`;
+}
+
+function showRefundModal(id){
+  const b = customerReplyData.find(x => x.id === id);
+  if(!b) return;
+  const root = document.createElement('div');
+  root.className = 'modal-backdrop';
+  root.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-icon" style="background:var(--green-dim); color:var(--green);"><svg class="icon"><use href="#i-card"/></svg></div>
+      <h3>Process refund for ${b.id}?</h3>
+      <p>${b.customer} will be refunded $${b.amount.toLocaleString()} for the ${b.vendor} booking to ${b.dest}, sent a refund confirmation email, and the booking will be cancelled. This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="refundCancel">Go back</button>
+        <button class="btn btn-primary" id="refundConfirm">Process Refund</button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelector('#refundCancel').onclick = () => root.remove();
+  root.addEventListener('click', e => { if(e.target === root) root.remove(); });
+  root.querySelector('#refundConfirm').onclick = async () => {
+    const btn = root.querySelector('#refundConfirm');
+    btn.disabled = true; btn.textContent = 'Processing…';
+    try {
+      await apiFetch(`/bookings/customer-reply/${id}/refund`, { method: 'POST' });
+      root.remove();
+      toast('Refund processed for ' + id + ' — confirmation email queued');
+      loadCustomerReplyPage(1);
+      loadDashboardStats();
+    } catch(err) {
+      btn.disabled = false; btn.textContent = 'Process Refund';
+      toast(err.message, 'danger');
+    }
+  };
 }
 
 function escalatedRowHTML(b){
