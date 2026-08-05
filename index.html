@@ -637,6 +637,7 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
     <div class="nav-group-label">Bookings</div>
     <a class="nav-item" data-page="pending"><svg class="icon"><use href="#i-clock"/></svg><span class="label">Pending Bookings</span><span class="badge-count" id="navPendingBadge">24</span></a>
     <a class="nav-item" data-page="escalated"><svg class="icon"><use href="#i-alert"/></svg><span class="label">Escalated Bookings</span><span class="badge-count" id="navEscalatedBadge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">0</span></a>
+    <a class="nav-item" data-page="emailqueue"><svg class="icon"><use href="#i-mail"/></svg><span class="label">Email Queue</span><span class="badge-count" id="navEmailQueueBadge">0</span></a>
     <a class="nav-item" data-page="completed" id="navCompleted"><svg class="icon"><use href="#i-check"/></svg><span class="label">Completed Bookings</span></a>
 
     <div class="nav-group-label">Security</div>
@@ -934,6 +935,43 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
           <div class="table-footer">
             <span class="footer-note" id="escalatedFooterNote">Showing 0–0 of 0 results</span>
             <div class="pagination" id="escalatedPagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 2c: EMAIL QUEUE -->
+      <!-- ============================================================ -->
+      <section class="page" id="page-emailqueue">
+        <div class="page-header">
+          <div>
+            <div class="page-eyebrow"><svg class="icon" style="width:13px;height:13px"><use href="#i-mail"/></svg> Communications</div>
+            <div class="page-title">Email Queue</div>
+            <div class="page-sub">Customer notifications queued and slowly delivered</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Customer</th>
+                  <th>To</th>
+                  <th>Subject</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Queued</th>
+                  <th>Sent</th>
+                </tr>
+              </thead>
+              <tbody id="emailQueueTableBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="footer-note" id="emailQueueFooterNote">Showing 0–0 of 0 results</span>
+            <div class="pagination" id="emailQueuePagination"></div>
           </div>
         </div>
       </section>
@@ -1340,6 +1378,9 @@ async function attemptLogin(){
     document.getElementById('appRoot').style.display = '';
     updateProfileUI(currentUser);
     await bootstrapApp();
+    if(!window._emailQueuePoll){
+      window._emailQueuePoll = setInterval(() => loadEmailQueuePage(1), 15000);
+    }
   } catch(err) {
     errEl.textContent = err.status === 429 ? 'Too many attempts — try again in a few minutes.' : (err.message || 'Invalid email or password.');
     errEl.classList.add('show');
@@ -1799,6 +1840,7 @@ async function bootstrapApp(){
     const tasks = [
       loadPendingPage(1),
       loadEscalatedPage(1),
+      loadEmailQueuePage(1),
       loadDashboardStats(),
       loadProfile(),
     ];
@@ -2055,6 +2097,9 @@ async function initAuthGate(){
       document.getElementById('appRoot').style.display = '';
       updateProfileUI(currentUser);
       await bootstrapApp();
+      if(!window._emailQueuePoll){
+        window._emailQueuePoll = setInterval(() => loadEmailQueuePage(1), 15000);
+      }
       return;
     } catch(err) {
       // Saved token is expired/invalid — clear it and fall through to a normal login.
@@ -2579,6 +2624,57 @@ async function loadEscalatedPage(page){
   } catch(err) {
     toast('Failed to load escalated bookings: ' + err.message, 'danger');
   }
+}
+
+/* ---- Email Queue ---- */
+let emailQueueData = [];
+let emailQueueTotal = 0;
+const EMAIL_QUEUE_PAGE_SIZE = 10;
+
+async function loadEmailQueuePage(page){
+  try {
+    const params = new URLSearchParams({ page: page || 1, pageSize: EMAIL_QUEUE_PAGE_SIZE });
+    const data = await apiFetch(`/bookings/email-queue?${params}`);
+    emailQueueData = data.emails;
+    emailQueueTotal = data.total;
+    renderEmailQueueTable();
+    const badge = document.getElementById('navEmailQueueBadge');
+    const queuedCount = emailQueueData.filter(e => e.status === 'queued').length;
+    if(badge) badge.textContent = queuedCount;
+  } catch(err) {
+    console.warn('Failed to load email queue:', err.message);
+  }
+}
+
+function emailQueueRowHTML(e){
+  const statusBadge = e.status === 'sent'
+    ? `<span class="badge" style="background:var(--green-dim); color:var(--green);">Sent</span>`
+    : `<span class="badge" style="background:var(--amber-dim, rgba(245,158,11,.15)); color:var(--amber, #f59e0b);">Queued</span>`;
+  const queuedAt = e.created_at ? new Date(e.created_at + 'Z').toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—';
+  const sentAt = e.sent_at ? new Date(e.sent_at + 'Z').toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—';
+  return `
+  <tr>
+    <td class="cell-mono cell-strong">${e.booking_id || '—'}</td>
+    <td>${e.customer || '—'}</td>
+    <td class="cell-mono">${e.to_email}</td>
+    <td>${e.subject}</td>
+    <td class="cell-sub">${e.reason || '—'}</td>
+    <td>${statusBadge}</td>
+    <td class="cell-sub">${queuedAt}</td>
+    <td class="cell-sub">${sentAt}</td>
+  </tr>`;
+}
+
+function renderEmailQueueTable(){
+  const tbody = document.getElementById('emailQueueTableBody');
+  if(!tbody) return;
+  if(emailQueueData.length === 0){
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><svg class="icon" style="width:38px;height:38px;margin-bottom:12px;opacity:.5"><use href="#i-empty"/></svg><b>No queued emails</b><div>Emails sent from Escalated Bookings will show up here.</div></div></td></tr>`;
+  } else {
+    tbody.innerHTML = emailQueueData.map(e => emailQueueRowHTML(e)).join('');
+  }
+  const note = document.getElementById('emailQueueFooterNote');
+  if(note) note.textContent = `Showing ${emailQueueData.length} of ${emailQueueTotal} results`;
 }
 
 function escalatedRowHTML(b){
@@ -3554,7 +3650,8 @@ function showEscalatedEmailModal(id, reason){
     try {
       await apiFetch(`/bookings/escalated/${id}/notify-email`, { method: 'POST', body: JSON.stringify({ subject, body, reason }) });
       root.remove();
-      toast(reason + ' email sent to ' + b.email);
+      toast(reason + ' email queued for ' + b.email + ' — see Email Queue');
+      if(typeof loadEmailQueuePage === 'function') loadEmailQueuePage(1);
     } catch(err) {
       btn.disabled = false; btn.textContent = 'Send Email';
       toast(err.message, 'danger');
