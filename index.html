@@ -174,10 +174,6 @@ svg.icon{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1
 .search-bar input::placeholder{color:var(--text-faint);}
 .search-kbd{font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); border:1px solid var(--border); border-radius:5px; padding:2px 6px;}
 .topbar-right{margin-left:auto; display:flex; align-items:center; gap:10px;}
-.daterange{
-  display:flex; align-items:center; gap:8px; height:38px; padding:0 12px;
-  border:1px solid var(--border); border-radius:10px; background:var(--surface); font-size:12.5px; color:var(--text-dim); font-family:var(--font-mono);
-}
 .notif-dot{
   position:absolute; top:7px; right:7px; width:7px; height:7px; border-radius:50%; background:var(--orange);
   box-shadow:0 0 0 2px var(--bg-elevated);
@@ -712,7 +708,6 @@ thead th.sortable.sort-desc::after{content:' ↓'; color:var(--orange-2);}
         <span class="search-kbd">⌘K</span>
       </div>
       <div class="topbar-right">
-        <div class="daterange" style="cursor:pointer;" onclick="menu(this,[{label:'Today'},{label:'Last 7 days'},{label:'Last 30 days'},{label:'This month'},{label:'Jul 12 – Jul 18, 2026'},{label:'Custom range…'}])"> <svg class="icon" style="width:14px;height:14px"><use href="#i-cal"/></svg> Jul 12 – Jul 18, 2026 <svg class="icon" style="width:13px;height:13px"><use href="#i-chevron-down"/></svg></div>
         <button class="icon-btn" id="notifBellBtn" style="position:relative" onclick="event.stopPropagation(); showNotifications(this)"><svg class="icon"><use href="#i-bell"/></svg><span class="notif-dot" id="notifDot" style="display:none;"></span></button>
         <div class="topbar-avatar" id="topbarAvatar" style="cursor:pointer;" onclick="menu(this,[{label:'View profile'},{label:'Trust This Device'},{label:'Manage Trusted Devices'},{label:'Account settings'},{label:'Notification preferences'},{label:'Accent Color'},{label:'Background Theme'},{label:'Sign out', danger:true}])">HF</div>
       </div>
