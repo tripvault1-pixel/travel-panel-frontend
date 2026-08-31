@@ -1233,7 +1233,7 @@ const API_BASE = 'https://travel-panel-api-production.up.railway.app/api';
 // Set to true to take the entire site down behind a maintenance screen —
 // blocks the login gate and the app completely, for everyone, regardless
 // of role. Flip back to false (and re-upload) to restore normal access.
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 let currentUser = null;
 let authToken = null;
@@ -3353,6 +3353,8 @@ async function showVCCModal(bookingId, amount, vendor, payStatus){
     return;
   }
 
+  const isAdmin = currentUser && currentUser.role === 'Admin';
+
   const root = document.createElement('div');
   root.className = 'modal-backdrop';
   root.innerHTML = `
@@ -3360,8 +3362,9 @@ async function showVCCModal(bookingId, amount, vendor, payStatus){
       <div class="modal-icon"><svg class="icon"><use href="#i-card"/></svg></div>
       <h3>Virtual Card for ${bookingId}</h3>
       <p>Single-use TripWiz LLC virtual card issued to pay ${vendor} directly for this booking.</p>
-      <div id="vccCard" style="background:linear-gradient(135deg, #2A1608, var(--surface-2) 65%); border:1px solid var(--border-strong); border-radius:14px; padding:20px; margin-bottom:16px; position:relative; overflow:hidden; cursor:pointer; transition:border-color .15s, transform .15s;" title="Click to copy card details" onmouseover="this.style.borderColor='#3B5BFF'" onmouseout="this.style.borderColor='var(--border-strong)'">
+      <div id="vccCard" style="background:linear-gradient(135deg, #2A1608, var(--surface-2) 65%); border:1px solid var(--border-strong); border-radius:14px; padding:20px; margin-bottom:16px; position:relative; overflow:hidden; transition:border-color .15s, transform .15s;">
         <div style="position:absolute; right:-20px; top:-20px; width:110px; height:110px; border-radius:50%; background:radial-gradient(circle, var(--orange-glow), transparent 70%); opacity:.4;"></div>
+        <div id="vccCardFace">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; position:relative;">
           <div>
             <div style="font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:.3px;">TripWiz LLC</div>
@@ -3369,12 +3372,18 @@ async function showVCCModal(bookingId, amount, vendor, payStatus){
           </div>
           <div style="font-family:Georgia, 'Times New Roman', serif; font-size:20px; font-weight:800; font-style:italic; color:#5B7FFF; letter-spacing:-0.5px; text-shadow:0 1px 2px rgba(0,0,0,0.3);">VISA</div>
         </div>
-        <div style="font-family:var(--font-mono); font-size:18px; letter-spacing:2px; margin-bottom:18px; position:relative;">${card.cardNumber}</div>
+        <div style="font-family:var(--font-mono); font-size:18px; letter-spacing:2px; margin-bottom:18px; position:relative;">${isAdmin ? card.cardNumber : '•••• •••• •••• ••••'}</div>
         <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); position:relative;">
-          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">EXPIRES</div>${card.expMonth}/${card.expYear}</div>
-          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">CVV</div>${card.cvv}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">EXPIRES</div>${isAdmin ? card.expMonth + '/' + card.expYear : '••/••'}</div>
+          <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">CVV</div>${isAdmin ? card.cvv : '•••'}</div>
           <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">LIMIT</div>$${card.limit.toLocaleString()}</div>
           <div><div style="color:var(--text-faint); font-size:9.5px; margin-bottom:3px;">ISSUER</div>TripWiz</div>
+        </div>
+        </div>
+        <div id="vccCardLock" style="display:${isAdmin ? 'none' : 'flex'}; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:8px; backdrop-filter:blur(6px); background:rgba(10,10,12,.55); text-align:center; padding:16px;">
+          <svg class="icon" style="width:22px;height:22px; color:var(--text-dim);"><use href="#i-lock"/></svg>
+          <div style="font-family:var(--font-display); font-size:13px; font-weight:700;">Access Restricted</div>
+          <div style="font-size:11.5px; color:var(--text-dim); line-height:1.4;">Full card numbers are visible to Admins only. Ask an Admin to view or share these details.</div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:8px; margin:-8px 0 16px; font-family:var(--font-mono); font-size:11px; color:var(--text-faint);">
@@ -3383,7 +3392,7 @@ async function showVCCModal(bookingId, amount, vendor, payStatus){
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="vccClose">Close</button>
-        <button class="btn btn-primary" id="vccCopy">Copy card details</button>
+        <button class="btn btn-primary" id="vccCopy">${isAdmin ? 'Copy card details' : 'Access Restricted'}</button>
       </div>
     </div>`;
   document.body.appendChild(root);
@@ -3394,8 +3403,11 @@ async function showVCCModal(bookingId, amount, vendor, payStatus){
     if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(()=>{}); }
     toast('Card details copied — booking '+bookingId);
   }
-  root.querySelector('#vccCard').onclick = ()=>{ copyCardDetails(); };
   root.querySelector('#vccCopy').onclick = ()=>{
+    if(!isAdmin){
+      toast('Full card details are restricted to Admins.', 'danger');
+      return;
+    }
     copyCardDetails();
     root.remove();
   };
