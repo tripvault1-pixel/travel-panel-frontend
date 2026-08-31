@@ -2446,6 +2446,7 @@ function mapPendingRow(row){
     vendor: row.vendor,
     amount: row.amount,
     pay: row.pay,
+    paidAt: row.paid_at,
     source: row.source,
     created: row.created,
     status: row.status,
@@ -2509,6 +2510,38 @@ const vendorSite = {
 };
 const payBadge = p => p==='Paid' ? 'badge-approved' : p==='Deposit Paid' ? 'badge-hold' : 'badge-pending';
 const statusBadge = s => ({pending:'badge-pending', review:'badge-review'}[s]);
+
+const PAY_TIMER_MS = 6 * 60 * 60 * 1000;
+function formatCountdown(ms){
+  const totalSec = Math.max(0, Math.floor(ms/1000));
+  const h = Math.floor(totalSec/3600);
+  const m = Math.floor((totalSec%3600)/60);
+  const s = totalSec%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function paymentTimerHTML(b){
+  if(b.pay !== 'Paid' || !b.paidAt) return '';
+  const ms = new Date(b.paidAt).getTime() + PAY_TIMER_MS - Date.now();
+  if(ms <= 0){
+    return '<div class="cell-sub pay-timer" id="pay-timer-'+b.id+'" style="color:var(--red); font-weight:600;">Overdue</div>';
+  }
+  return '<div class="cell-sub pay-timer" id="pay-timer-'+b.id+'" data-paid-at="'+b.paidAt+'">'+formatCountdown(ms)+' left</div>';
+}
+function tickPaymentTimers(){
+  document.querySelectorAll('.pay-timer[data-paid-at]').forEach(function(el){
+    const paidAt = el.getAttribute('data-paid-at');
+    const ms = new Date(paidAt).getTime() + PAY_TIMER_MS - Date.now();
+    if(ms <= 0){
+      el.textContent = 'Overdue';
+      el.style.color = 'var(--red)';
+      el.style.fontWeight = '600';
+      el.removeAttribute('data-paid-at');
+    } else {
+      el.textContent = formatCountdown(ms) + ' left';
+    }
+  });
+}
+setInterval(tickPaymentTimers, 1000);
 const statusLabel = s => ({pending:'Pending', review:'In Review'}[s]);
 
 /* ============================================================
@@ -2568,7 +2601,7 @@ function pendingRowHTML(b, idx){
     <td class="cell-mono">${b.dates}</td>
     <td>${b.hotel_address ? `<span title="${b.hotel_address.replace(/"/g,'&quot;')} (click to copy)" style="cursor:pointer; border-bottom:1px dotted var(--text-faint);" onclick="copyHotelAddress('${b.hotel_address.replace(/'/g,"\\'")}', '${b.vendor.replace(/'/g,"\\'")}')">${b.vendor}</span>` : b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
     <td class="cell-strong">$${b.amount.toLocaleString()}</td>
-    <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
+    <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span>${paymentTimerHTML(b)}</td>
     <td>${b.source}</td>
     <td class="cell-mono">${b.created}</td>
     <td><span class="badge ${statusBadge(b.status)}">${statusLabel(b.status)}</span></td>
@@ -2828,7 +2861,7 @@ function escalatedRowHTML(b){
     <td class="cell-mono">${b.dates}</td>
     <td>${b.hotel_address ? `<span title="${b.hotel_address.replace(/"/g,'&quot;')} (click to copy)" style="cursor:pointer; border-bottom:1px dotted var(--text-faint);" onclick="copyHotelAddress('${b.hotel_address.replace(/'/g,"\\'")}', '${b.vendor.replace(/'/g,"\\'")}')">${b.vendor}</span>` : b.vendor}${b.flightClass?`<div class="cell-sub">${b.flightClass}</div>`:''}${b.roomType?`<div class="cell-sub">${b.roomType}</div>`:''}</td>
     <td class="cell-strong">$${b.amount.toLocaleString()}</td>
-    <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span></td>
+    <td><span class="badge ${payBadge(b.pay)}">${b.pay}</span>${paymentTimerHTML(b)}</td>
     <td class="cell-sub">${b.escalation_reason || 'Escalated by agent'}</td>
     <td>
       <div class="row-actions" style="position:relative;">
